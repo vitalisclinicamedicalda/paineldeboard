@@ -6,516 +6,172 @@
 <title>Mapa de Saldos - Vitalis</title>
 
 <style>
-:root{
-  --red:#b90f0a;
-  --line:#111;
-  --header:#e9eef2;
-  --total:#f1f1f1;
-  --grand:#d9ead3;
-}
-*{box-sizing:border-box}
-html,body{
+body{
   margin:0;
-  padding:0;
-  width:100%;
+  font-family:Arial;
   background:#fff;
-  font-family:Arial, Helvetica, sans-serif;
-  color:#111;
 }
-.report-shell{
-  width:100%;
-  max-width:none;
-  margin:0;
-  padding:10px 12px;
-}
-.executive-header{
+
+/* HEADER */
+.header{
   display:flex;
-  align-items:center;
   justify-content:space-between;
-  gap:18px;
-  min-height:74px;
-  padding:6px 4px 10px;
-  border-bottom:3px solid var(--red);
-  margin-bottom:10px;
-}
-.logo-box{
-  flex:0 0 260px;
-  display:flex;
   align-items:center;
+  border-bottom:3px solid #b90f0a;
+  padding:10px;
 }
-.logo-box img{
-  height:62px;
-  max-width:250px;
-  object-fit:contain;
+
+.logo{
+  height:60px;
 }
-.title-box{
-  flex:1;
+
+.title{
   text-align:center;
+  font-weight:bold;
+  font-size:20px;
 }
-.title-box h1{
-  margin:0;
-  font-size:21px;
-  font-weight:900;
-  letter-spacing:.04em;
-}
-.title-box .subtitle{
-  margin-top:5px;
-  font-size:12px;
-  font-weight:800;
-  color:#555;
-  letter-spacing:.08em;
-}
-.right-box{
-  flex:0 0 260px;
-  text-align:right;
-  font-size:11px;
-  font-weight:800;
-  color:#555;
-  line-height:1.35;
-}
-.print-actions{
-  display:flex;
-  justify-content:flex-end;
-  margin:8px 0 10px;
-}
-.print-btn{
-  border:1px solid var(--red);
-  background:var(--red);
-  color:#fff;
-  border-radius:8px;
-  padding:8px 13px;
-  font-weight:900;
-  cursor:pointer;
-}
-.table-scroll{
-  width:100%;
-  overflow:auto;
-}
-#loading{
-  padding:20px;
-  font-weight:800;
-  color:#555;
-}
-#erro{
-  display:none;
-  margin:12px 0;
-  padding:12px;
-  border:1px solid #f2b8b5;
-  background:#fff4f4;
-  color:#8a1c16;
-  font-weight:800;
-  border-radius:8px;
-}
+
+/* TABELA */
 table{
   width:100%;
   border-collapse:collapse;
   table-layout:fixed;
-  background:#fff;
 }
-col.col-item{width:6%}
-col.col-value{width:14%}
-th,td{
-  border:1px solid var(--line);
-  padding:4px 5px;
+
+th, td{
+  border:1px solid #000;
+  padding:4px;
   font-size:11px;
-  line-height:1.15;
-  vertical-align:middle;
-  overflow:hidden;
-  text-overflow:ellipsis;
 }
+
 th{
-  background:var(--header);
+  background:#e9eef2;
   text-align:center;
-  font-weight:900;
 }
-td.numeric{
+
+.numeric{
   text-align:right;
-  white-space:nowrap;
-  font-weight:800;
+  font-weight:bold;
 }
-td.center{text-align:center}
-tr.total-row td{
-  background:var(--total);
-  font-weight:950;
+
+/* TOTAIS */
+.total{
+  background:#f1f1f1;
+  font-weight:bold;
   border-top:2px solid #000;
   border-bottom:2px solid #000;
 }
-tr.grand-total-row td{
-  background:var(--grand);
-  font-weight:950;
+
+.grand{
+  background:#d9ead3;
+  font-weight:bold;
   border-top:3px solid #000;
   border-bottom:3px solid #000;
 }
-td.total-label{
-  text-align:center !important;
-  vertical-align:middle !important;
-  font-weight:950 !important;
-  letter-spacing:.03em;
-}
-tr.section-title-row td{
+
+.total-label{
   text-align:center;
-  font-weight:950;
-  font-size:15px;
-  background:#fff;
-  border:1px solid #111;
-  padding:8px 5px;
 }
-tr.blank-row td{
-  height:12px;
-  padding:0;
-  border:none;
-  background:#fff;
-}
-@media(max-width:760px){
-  .executive-header{display:block;text-align:center}
-  .logo-box{justify-content:center;flex:auto;margin-bottom:8px}
-  .right-box{text-align:center;flex:auto;margin-top:8px}
-}
+
+/* PRINT */
 @page{
   size:A4 landscape;
-  margin:5mm;
 }
+
 @media print{
-  html,body{
-    width:297mm;
-    height:210mm;
-    overflow:hidden;
-    -webkit-print-color-adjust:exact;
-    print-color-adjust:exact;
+  body{
+    zoom:0.75;
   }
-  .print-actions,#loading,#erro{display:none !important}
-  .report-shell{
-    width:287mm;
-    max-width:287mm;
-    height:200mm;
-    padding:0;
-    overflow:hidden;
-  }
-  .print-fit{
-    transform:scale(var(--print-scale, 1));
-    transform-origin:top left;
-    width:calc(100% / var(--print-scale, 1));
-  }
-  .executive-header{
-    min-height:44px;
-    padding:0 0 4px;
-    margin-bottom:4px;
-    border-bottom:2px solid #000;
-  }
-  .logo-box img{height:38px}
-  .title-box h1{font-size:14px}
-  .title-box .subtitle,.right-box{font-size:7.5px}
-  th,td{
-    font-size:6.6px;
-    padding:1.2px 1.6px;
-    line-height:1.02;
-  }
-  tr.section-title-row td{
-    font-size:8px;
-    padding:1.5px;
-  }
-  tr.blank-row td{height:3px}
 }
 </style>
 </head>
 
 <body>
-<div class="report-shell">
-  <div class="print-fit" id="printFit">
-    <div class="executive-header">
-      <div class="logo-box">
-        <img src="vitalis-logo.png" alt="Vitalis Clínica Médica" onerror="this.style.display='none'">
-      </div>
-      <div class="title-box">
-        <h1>MAPA DE SALDOS - VITALIS</h1>
-        <div class="subtitle">CONTROLO FINANCEIRO</div>
-      </div>
-      <div class="right-box">
-        Dados do Google Sheets<br>
-        Actualização automática
-      </div>
-    </div>
 
-    <div class="print-actions">
-      <button class="print-btn" onclick="preparePrint(); window.print();">Imprimir / Guardar PDF</button>
-    </div>
-
-    <div id="loading">A carregar mapa de saldos...</div>
-    <div id="erro"></div>
-    <div class="table-scroll">
-      <table id="tabela"></table>
-    </div>
-  </div>
+<div class="header">
+  <img src="vitalis-logo.png" class="logo">
+  <div class="title">MAPA DE SALDOS - VITALIS</div>
+  <div></div>
 </div>
 
+<table id="tabela"></table>
+
 <script>
-const CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vSLUDSFALaFHQlkwlvXZT8UrwohxbgrHC99Evm1_MopNIRfRvjFgaeFjdQqE85IdYZiUIEY5gBQKl5w/pub?gid=0&single=true&output=csv";
+
+const URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vSLUDSFALaFHQlkwlvXZT8UrwohxbgrHC99Evm1_MopNIRfRvjFgaeFjdQqE85IdYZiUIEY5gBQKl5w/pub?gid=0&single=true&output=csv";
 
 function parseCSV(text){
-  const rows = [];
-  let row = [];
-  let cell = "";
-  let insideQuotes = false;
-
-  for(let i=0; i<text.length; i++){
-    const char = text[i];
-    const next = text[i+1];
-
-    if(char === '"' && insideQuotes && next === '"'){
-      cell += '"';
-      i++;
-    }else if(char === '"'){
-      insideQuotes = !insideQuotes;
-    }else if(char === "," && !insideQuotes){
-      row.push(cell);
-      cell = "";
-    }else if((char === "\n" || char === "\r") && !insideQuotes){
-      if(char === "\r" && next === "\n") i++;
-      row.push(cell);
-      rows.push(row);
-      row = [];
-      cell = "";
-    }else{
-      cell += char;
-    }
-  }
-
-  if(cell !== "" || row.length){
-    row.push(cell);
-    rows.push(row);
-  }
-
-  return rows;
+  return text.split("\n").map(l => l.split(","));
 }
 
-function norm(v){
-  return String(v ?? "")
-    .trim()
-    .toUpperCase()
-    .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g,"")
-    .replace(/\s+/g," ");
+function isTotal(row){
+  const txt = row.join(" ").toUpperCase();
+  return txt.includes("TOTAL");
 }
-function normCompact(v){
-  return norm(v).replace(/[^A-Z0-9]/g,"");
-}
-function rowText(row){
-  return norm(row.map(x => String(x ?? "").trim()).filter(Boolean).join(" "));
-}
-function isNumericText(value){
-  const s = String(value ?? "").trim();
-  if(!s) return false;
-  if(/[A-Za-z]/.test(s) && !/(MT|MZN|USD|EUR|MZN-)/i.test(s)) return false;
-  return /\d/.test(s);
-}
-function isSectionTitleRow(row){
-  const c = normCompact(rowText(row));
-  return c.includes("MAPADESALDOSCOOPMED") || c.includes("CONTROLEDEDESCONTODEPOS") || c.includes("CONTROLODEDESCONTODEPOS");
-}
-function sectionTitle(row){
-  const c = normCompact(rowText(row));
-  if(c.includes("MAPADESALDOSCOOPMED")) return "MAPA DE SALDOS - COOPMED";
-  return "CONTROLE DE DESCONTO DE POS";
-}
-function isTotalRow(row){
-  const t = rowText(row);
-  const c = normCompact(t);
-  return (
-    /\bTOTAL\b/.test(t) ||
-    c.includes("TOTALMZNMOZA") ||
-    c.includes("MZNMOZA") ||
-    c.includes("TOTALDOSALDODAEMPRESA") ||
-    c.includes("TOTALSALDODAEMPRESA")
-  );
-}
-function isGrandTotalRow(row){
-  const c = normCompact(rowText(row));
-  return c.includes("TOTALGERAL") || c.includes("TOTALDOSSALDOS") || c.includes("TOTALDOSALDODAEMPRESA") || c.includes("TOTALSALDODAEMPRESA");
-}
-function cleanRows(data){
-  let rows = (data || [])
-    .map(r => (r || []).map(c => String(c ?? "").trim()))
-    .filter(r => r.some(c => c !== ""))
-    .map(r => {
-      let last = r.length - 1;
-      while(last >= 0 && r[last] === "") last--;
-      return r.slice(0, last + 1);
-    });
 
-  const start = rows.findIndex(r => r.some(c => norm(c) === "ITEM" || norm(c).includes("ITEM")));
-  if(start >= 0) rows = rows.slice(start);
+function isGrand(row){
+  const txt = row.join(" ").toUpperCase();
+  return txt.includes("TOTAL DO SALDO");
+}
 
-  return rows;
-}
-function findHeaderInfo(rows){
-  const headerIndex = rows.findIndex(r => r.some(c => norm(c) === "ITEM" || norm(c).includes("ITEM")));
-  const header = headerIndex >= 0 ? rows[headerIndex] : rows[0] || [];
-  const itemIndex = Math.max(0, header.findIndex(c => norm(c).includes("ITEM")));
-  let respIndex = header.findIndex(c => normCompact(c).includes("RESPONSAVEL"));
-  if(respIndex < itemIndex) respIndex = Math.max(itemIndex, header.length - 2);
-  return {headerIndex, header, itemIndex, respIndex};
-}
-function makeBlankRow(table, colCount){
-  const tr = document.createElement("tr");
-  tr.className = "blank-row";
-  const td = document.createElement("td");
-  td.colSpan = colCount;
-  td.innerHTML = "&nbsp;";
-  tr.appendChild(td);
-  table.appendChild(tr);
-}
-function addSectionTitle(table, title, colCount){
-  makeBlankRow(table, colCount);
-  const tr = document.createElement("tr");
-  tr.className = "section-title-row";
-  const td = document.createElement("td");
-  td.colSpan = colCount;
-  td.innerText = title;
-  tr.appendChild(td);
-  table.appendChild(tr);
-}
-function addColgroup(table, colCount){
-  const cg = document.createElement("colgroup");
-  for(let i=0;i<colCount;i++){
-    const col = document.createElement("col");
-    if(i===0) col.className = "col-item";
-    if(i===colCount-1) col.className = "col-value";
-    cg.appendChild(col);
-  }
-  table.appendChild(cg);
-}
-function renderTable(data){
+fetch(URL)
+.then(r=>r.text())
+.then(text=>{
+  const data = parseCSV(text);
+
   const table = document.getElementById("tabela");
-  const loading = document.getElementById("loading");
-  table.innerHTML = "";
 
-  let rows = cleanRows(data);
-  if(!rows.length){
-    loading.textContent = "Sem dados encontrados no Google Sheets.";
-    return;
-  }
+  // encontrar inicio
+  let start = data.findIndex(r => r.includes("ITEM"));
+  if(start < 0) start = 7;
 
-  const info = findHeaderInfo(rows);
-  const colCount = Math.max(...rows.map(r => r.length), info.header.length, 6);
-  addColgroup(table, colCount);
+  data.slice(start).forEach((row, idx)=>{
 
-  loading.style.display = "none";
+    if(row.every(c => !c)) return;
 
-  rows.forEach((r, index) => {
-    let row = [...r];
-    while(row.length < colCount) row.push("");
-
-    if(isSectionTitleRow(row)){
-      addSectionTitle(table, sectionTitle(row), colCount);
-      return;
-    }
-
-    const isHeader = index === info.headerIndex || row.some(c => norm(c) === "ITEM");
     const tr = document.createElement("tr");
 
-    if(isTotalRow(row) && !isHeader){
-      tr.className = isGrandTotalRow(row) ? "grand-total-row" : "total-row";
+    if(isTotal(row)){
+      const label = row.find(c => c && c.toUpperCase().includes("TOTAL")) || "TOTAL";
+      const value = row.reverse().find(c => c && c.match(/\d/)) || "";
 
-      let label = row.find(c => norm(c).includes("TOTAL")) || "";
-      const compact = normCompact(rowText(row));
-      if(compact.includes("MZNMOZA")) label = "TOTAL MZN-MOZA";
-      if(compact.includes("TOTALDOSALDODAEMPRESA") || compact.includes("TOTALSALDODAEMPRESA")) label = "TOTAL DO SALDO DA EMPRESA";
-      if(!label) label = "TOTAL";
+      const td1 = document.createElement("td");
+      td1.colSpan = row.length - 1;
+      td1.innerText = label;
+      td1.className = "total-label";
 
-      let valueIndex = -1;
-      for(let i = colCount - 1; i >= 0; i--){
-        if(isNumericText(row[i])){
-          valueIndex = i;
-          break;
-        }
-      }
-      if(valueIndex < 0) valueIndex = colCount - 1;
+      const td2 = document.createElement("td");
+      td2.innerText = value;
+      td2.className = "numeric";
 
-      for(let i=0; i<info.itemIndex; i++){
-        const td = document.createElement("td");
-        td.innerText = "";
-        tr.appendChild(td);
-      }
+      tr.appendChild(td1);
+      tr.appendChild(td2);
 
-      const tdLabel = document.createElement("td");
-      tdLabel.colSpan = Math.max(1, info.respIndex - info.itemIndex + 1);
-      tdLabel.className = "total-label";
-      tdLabel.innerText = label;
-      tr.appendChild(tdLabel);
-
-      for(let i=info.respIndex+1; i<valueIndex; i++){
-        const td = document.createElement("td");
-        td.innerText = "";
-        tr.appendChild(td);
-      }
-
-      const tdValue = document.createElement("td");
-      tdValue.className = "numeric";
-      tdValue.innerText = row[valueIndex] || "";
-      tr.appendChild(tdValue);
-
-      const used = Array.from(tr.children).reduce((a,td)=>a+(td.colSpan || 1),0);
-      for(let i=used;i<colCount;i++){
-        const td = document.createElement("td");
-        td.innerText = "";
-        tr.appendChild(td);
-      }
+      tr.className = isGrand(row) ? "grand" : "total";
 
       table.appendChild(tr);
-
-      if(compact.includes("TOTALDOSALDODAEMPRESA") || compact.includes("TOTALSALDODAEMPRESA")){
-        makeBlankRow(table, colCount);
-      }
       return;
     }
 
-    row.forEach((cell, i) => {
-      const td = document.createElement(isHeader ? "th" : "td");
+    row.forEach((cell,i)=>{
+      if(String(cell).toUpperCase().includes("OBS")) return;
+
+      const td = document.createElement(idx==0?"th":"td");
       td.innerText = cell;
-      const key = norm(cell);
-      if(!isHeader && isNumericText(cell)) td.classList.add("numeric");
-      if(!isHeader && (key === "-" || key === "SIM" || key === "NAO" || key === "NÃO")) td.classList.add("center");
+
+      if(cell && cell.match(/\d/)) td.className="numeric";
+
       tr.appendChild(td);
     });
 
     table.appendChild(tr);
+
   });
-}
-function preparePrint(){
-  const fit = document.getElementById("printFit");
-  if(!fit) return;
-  document.documentElement.style.setProperty("--print-scale", "1");
 
-  const maxW = 1085;
-  const maxH = 756;
-  const scaleW = maxW / Math.max(fit.scrollWidth, 1);
-  const scaleH = maxH / Math.max(fit.scrollHeight, 1);
-  const scale = Math.min(1, scaleW, scaleH);
-  document.documentElement.style.setProperty("--print-scale", String(scale));
-}
-window.addEventListener("beforeprint", preparePrint);
-window.addEventListener("afterprint", () => {
-  document.documentElement.style.setProperty("--print-scale", "1");
-});
+})
+.catch(()=>alert("Erro ao carregar dados"));
 
-async function carregar(){
-  const loading = document.getElementById("loading");
-  const erro = document.getElementById("erro");
-  try{
-    const url = CSV_URL + "&cache=" + Date.now();
-    const res = await fetch(url, {cache:"no-store"});
-    if(!res.ok) throw new Error("HTTP " + res.status);
-    const text = await res.text();
-    const data = parseCSV(text);
-    renderTable(data);
-  }catch(e){
-    console.error(e);
-    loading.style.display = "none";
-    erro.style.display = "block";
-    erro.textContent = "Erro ao carregar o Google Sheets. Confirme se o ficheiro está publicado como CSV e se o GitHub recebeu o index.html actualizado.";
-  }
-}
-carregar();
 </script>
+
 </body>
 </html>
