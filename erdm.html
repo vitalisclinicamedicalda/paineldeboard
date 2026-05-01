@@ -211,6 +211,18 @@ th,td{
 <div id="app" class="loading">A carregar Extrato ERDM...</div>
 
 <script>
+  (function protegerPagina(){
+  const auth = sessionStorage.getItem("painel_board_auth");
+  const loginTime = Number(sessionStorage.getItem("painel_board_login_time"));
+  const agora = Date.now();
+
+  const LIMITE_TEMPO = 60 * 60 * 1000; // 1 hora
+
+  if(auth !== "ok" || !loginTime || (agora - loginTime) > LIMITE_TEMPO){
+    sessionStorage.clear();
+    window.location.href = "login.html";
+  }
+})();
 const CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vSLUDSFALaFHQlkwlvXZT8UrwohxbgrHC99Evm1_MopNIRfRvjFgaeFjdQqE85IdYZiUIEY5gBQKl5w/pub?gid=572695805&single=true&output=csv";
 
 function parseCSV(text){
