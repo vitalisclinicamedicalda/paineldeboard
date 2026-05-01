@@ -1,0 +1,363 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+<meta charset="UTF-8">
+<title>Mapa de Despesas</title>
+
+<style>
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: Arial, Helvetica, sans-serif;
+  background: #fff;
+  color: #000;
+  padding: 4px;
+}
+
+.logo {
+  height: 62px;
+  margin-bottom: 4px;
+}
+
+.nav-buttons {
+  position: absolute;
+  top: 13px;
+  left: 540px;
+  display: flex;
+  gap: 65px;
+}
+
+.nav-btn {
+  min-width: 130px;
+  height: 28px;
+  padding: 6px 14px;
+  border: 2px solid #e5392d;
+  border-radius: 6px;
+  background: #fff;
+  color: #000;
+  text-decoration: none;
+  font-size: 11px;
+  font-weight: bold;
+  text-align: center;
+}
+
+.nav-btn:hover,
+.nav-btn.active {
+  background: #e5392d;
+  color: #fff;
+}
+
+.title {
+  border: 2px solid #000;
+  text-align: center;
+  font-weight: bold;
+  font-size: 16px;
+  padding: 3px;
+  margin-bottom: 24px;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  table-layout: fixed;
+  font-size: 16px;
+}
+
+th, td {
+  border: 1px solid #000;
+  padding: 3px 4px;
+  vertical-align: middle;
+}
+
+th {
+  background: #d9d9d9;
+  font-weight: bold;
+  text-align: center;
+}
+
+td {
+  height: 24px;
+}
+
+.col-item { width: 6%; text-align: center; }
+.col-desc { width: 36%; }
+.col-resp { width: 19%; text-align: center; }
+.col-ent { width: 12%; text-align: center; }
+.col-lim { width: 13.5%; text-align: center; }
+.col-valor { width: 15.5%; text-align: right; }
+
+.section-row td {
+  background: #92d050;
+  font-weight: bold;
+  text-align: center;
+}
+
+.subtotal-row td {
+  background: #d9d9d9;
+  font-weight: bold;
+}
+
+.subtotal-label {
+  text-align: center;
+}
+
+.total-row td {
+  background: #d9d9d9;
+  font-weight: bold;
+}
+
+.total-label {
+  text-align: center;
+}
+
+.total-value {
+  font-size: 22px;
+  font-weight: bold;
+  text-align: right;
+}
+
+.valor {
+  text-align: right;
+}
+
+.center {
+  text-align: center;
+}
+
+.desc-small {
+  font-size: 10px;
+}
+
+.loading {
+  text-align: center;
+  font-size: 16px;
+  padding: 30px;
+}
+
+@media print {
+  @page {
+    size: A4 portrait;
+    margin: 5mm;
+  }
+
+  body {
+    padding: 0;
+    zoom: 0.82;
+  }
+
+  .nav-buttons {
+    display: none;
+  }
+
+  .logo {
+    height: 55px;
+  }
+
+  table {
+    page-break-inside: avoid;
+  }
+}
+</style>
+</head>
+
+<body>
+
+<img src="vitalis-logo.png" class="logo">
+
+<div class="nav-buttons">
+  <a href="index.html" class="nav-btn">Saldos</a>
+  <a href="despesas.html" class="nav-btn active">Mapa de Despesas</a>
+  <a href="devedores.html" class="nav-btn">Mapa de Devedores</a>
+  <a href="erdm.html" class="nav-btn">Extrato ERDM</a>
+</div>
+
+<div class="title">Relação de Despesas Pendentes</div>
+
+<div id="app" class="loading">A carregar despesas...</div>
+
+<script>
+const CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vSLUDSFALaFHQlkwlvXZT8UrwohxbgrHC99Evm1_MopNIRfRvjFgaeFjdQqE85IdYZiUIEY5gBQKl5w/pub?gid=263297811&single=true&output=csv";
+
+function parseCSV(text) {
+  const rows = [];
+  let row = [];
+  let cell = "";
+  let insideQuotes = false;
+
+  for (let i = 0; i < text.length; i++) {
+    const char = text[i];
+    const next = text[i + 1];
+
+    if (char === '"' && insideQuotes && next === '"') {
+      cell += '"';
+      i++;
+    } else if (char === '"') {
+      insideQuotes = !insideQuotes;
+    } else if (char === "," && !insideQuotes) {
+      row.push(cell.trim());
+      cell = "";
+    } else if ((char === "\n" || char === "\r") && !insideQuotes) {
+      if (cell !== "" || row.length > 0) {
+        row.push(cell.trim());
+        rows.push(row);
+        row = [];
+        cell = "";
+      }
+      if (char === "\r" && next === "\n") i++;
+    } else {
+      cell += char;
+    }
+  }
+
+  if (cell !== "" || row.length > 0) {
+    row.push(cell.trim());
+    rows.push(row);
+  }
+
+  return rows;
+}
+
+function isSection(row) {
+  const txt = row.join(" ").toUpperCase();
+  return (
+    txt.includes("DESPESAS PRIORITARIAS") ||
+    txt.includes("DESPESAS PRIORITÁRIAS") ||
+    txt.includes("PAGAMENTO DE MEDICOS") ||
+    txt.includes("PAGAMENTO DE MÉDICOS") ||
+    txt.includes("CONVERSAO DE FERIAS") ||
+    txt.includes("CONVERSÃO DE FÉRIAS") ||
+    txt.includes("DESPESAS CORRENTES")
+  );
+}
+
+function isSubtotal(row) {
+  return row.join(" ").toUpperCase().includes("SUB-TOTAL");
+}
+
+function isTotal(row) {
+  return row.join(" ").toUpperCase().includes("TOTAL GERAL");
+}
+
+function clean(v) {
+  return v || "";
+}
+
+function renderTable(rows) {
+  let html = `
+  <table>
+    <colgroup>
+      <col class="col-item">
+      <col class="col-desc">
+      <col class="col-resp">
+      <col class="col-ent">
+      <col class="col-lim">
+      <col class="col-valor">
+    </colgroup>
+    <thead>
+      <tr>
+        <th>Item</th>
+        <th>Descricao</th>
+        <th>Responsavel</th>
+        <th>D. DE ENTRADA</th>
+        <th>DATA LIMITE</th>
+        <th>Valor</th>
+      </tr>
+    </thead>
+    <tbody>
+  `;
+
+  for (const r of rows) {
+    if (!r || r.every(c => !c)) continue;
+
+    const joined = r.join(" ").toUpperCase();
+
+    if (
+      joined.includes("ITEM") &&
+      joined.includes("DESCRICAO") &&
+      joined.includes("VALOR")
+    ) continue;
+
+    if (joined.includes("RELAÇÃO DE DESPESAS")) continue;
+
+    if (isSection(r)) {
+      html += `
+      <tr class="section-row">
+        <td></td>
+        <td colspan="5">${clean(r.find(c => c && c.trim() !== ""))}</td>
+      </tr>`;
+      continue;
+    }
+
+    if (isSubtotal(r)) {
+      const valor = r[r.length - 1] || "";
+      html += `
+      <tr class="subtotal-row">
+        <td colspan="5" class="subtotal-label">SUB-TOTAL</td>
+        <td class="valor">${valor}</td>
+      </tr>`;
+      continue;
+    }
+
+    if (isTotal(r)) {
+      const valor = r[r.length - 1] || "";
+      html += `
+      <tr class="total-row">
+        <td colspan="5" class="total-label">TOTAL GERAL</td>
+        <td class="total-value">${valor}</td>
+      </tr>`;
+      continue;
+    }
+
+    const item = clean(r[0]);
+    const desc = clean(r[1]);
+    const resp = clean(r[2]);
+    const entrada = clean(r[3]);
+    const limite = clean(r[4]);
+    const valor = clean(r[5]);
+
+    html += `
+    <tr>
+      <td class="center">${item}</td>
+      <td class="${desc.length > 35 ? 'desc-small' : ''}">${desc}</td>
+      <td class="center">${resp}</td>
+      <td class="center">${entrada}</td>
+      <td class="center">${limite}</td>
+      <td class="valor">${valor}</td>
+    </tr>`;
+  }
+
+  html += `
+    </tbody>
+  </table>`;
+
+  return html;
+}
+
+async function carregarDespesas() {
+  const app = document.getElementById("app");
+
+  try {
+    const resp = await fetch(CSV_URL);
+    if (!resp.ok) throw new Error("Erro ao carregar Google Sheets");
+
+    const text = await resp.text();
+    const rows = parseCSV(text);
+
+    app.className = "";
+    app.innerHTML = renderTable(rows);
+
+  } catch (e) {
+    app.innerHTML = "Erro ao carregar despesas. Verifique se o Google Sheet está publicado.";
+    console.error(e);
+  }
+}
+
+carregarDespesas();
+</script>
+
+</body>
+</html>
