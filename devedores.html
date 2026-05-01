@@ -5,160 +5,139 @@
 <title>Mapa de Devedores</title>
 
 <style>
-* {
-  margin: 0;
-  padding: 0;
-  box-sizing: border-box;
+*{margin:0;padding:0;box-sizing:border-box}
+
+body{
+  font-family:Arial, Helvetica, sans-serif;
+  background:#fff;
+  color:#000;
+  padding:8px 10px;
+  font-size:12px;
 }
 
-body {
-  font-family: Arial, Helvetica, sans-serif;
-  background: #fff;
-  color: #000;
-  padding: 8px;
+.logo{
+  height:55px;
 }
 
-.logo {
-  height: 58px;
-  margin-bottom: 2px;
+.nav-buttons{
+  position:absolute;
+  top:13px;
+  left:540px;
+  display:flex;
+  gap:65px;
 }
 
-.nav-buttons {
-  position: absolute;
-  top: 13px;
-  left: 540px;
-  display: flex;
-  gap: 65px;
+.nav-btn{
+  min-width:130px;
+  height:28px;
+  padding:6px 14px;
+  border:2px solid #e5392d;
+  border-radius:6px;
+  background:#fff;
+  color:#000;
+  text-decoration:none;
+  font-size:11px;
+  font-weight:bold;
+  text-align:center;
 }
 
-.nav-btn {
-  min-width: 130px;
-  height: 28px;
-  padding: 6px 14px;
-  border: 2px solid #e5392d;
-  border-radius: 6px;
-  background: #fff;
-  color: #000;
-  text-decoration: none;
-  font-size: 11px;
-  font-weight: bold;
-  text-align: center;
+.nav-btn:hover,.nav-btn.active{
+  background:#e5392d;
+  color:#fff;
 }
 
-.nav-btn:hover,
-.nav-btn.active {
-  background: #e5392d;
-  color: #fff;
+.title{
+  text-align:center;
+  font-size:18px;
+  font-weight:bold;
+  margin-top:-12px;
 }
 
-.title {
-  text-align: center;
-  font-size: 18px;
-  font-weight: bold;
-  margin-bottom: 10px;
+.data{
+  text-align:center;
+  font-size:12px;
+  font-weight:bold;
+  margin:4px 0 10px;
 }
 
-.table-wrap {
-  width: 100%;
-  overflow: visible;
+table{
+  width:100%;
+  border-collapse:collapse;
+  table-layout:fixed;
 }
 
-table {
-  width: 100%;
-  border-collapse: collapse;
-  table-layout: fixed;
-  font-size: 12px;
+th,td{
+  border:1px solid #000;
+  padding:2px 3px;
+  height:21px;
+  text-align:center;
+  vertical-align:middle;
+  white-space:nowrap;
 }
 
-th, td {
-  border: 1px solid #000;
-  padding: 2px 3px;
-  text-align: center;
-  vertical-align: middle;
-  height: 20px;
-  white-space: nowrap;
+th{
+  font-weight:bold;
 }
 
-th {
-  font-weight: bold;
+.left{text-align:left}
+.bold{font-weight:bold}
+.italic{font-style:italic}
+.green{color:#00b050}
+.red{color:#c00000}
+
+.group-row td,
+.subtotal-row td,
+.total-row td{
+  font-weight:bold;
+  border-top:2px solid #000;
+  border-bottom:2px solid #000;
 }
 
-.left {
-  text-align: left;
+.group-row td:nth-child(2){
+  font-style:italic;
+  text-align:left;
 }
 
-.bold {
-  font-weight: bold;
+.summary{
+  width:380px;
+  margin-top:16px;
+  font-size:14px;
 }
 
-.italic {
-  font-style: italic;
+.summary td{
+  border:none;
+  border-bottom:2px solid #000;
+  text-align:left;
+  height:20px;
 }
 
-.green {
-  color: #00b050;
+.loading{
+  text-align:center;
+  padding:30px;
+  font-size:15px;
 }
 
-.red {
-  color: #c00000;
-}
-
-.subtotal td,
-.total-row td {
-  font-weight: bold;
-  border-top: 2px solid #000;
-  border-bottom: 2px solid #000;
-}
-
-.side-gap {
-  border: none !important;
-  width: 12px;
-}
-
-.bottom-summary {
-  margin-top: 18px;
-  width: 380px;
-  font-size: 14px;
-}
-
-.bottom-summary td {
-  border: none;
-  border-bottom: 2px solid #000;
-  height: 20px;
-  text-align: left;
-}
-
-.loading {
-  text-align: center;
-  padding: 30px;
-  font-size: 16px;
-}
-
-@media print {
-  @page {
-    size: A4 landscape;
-    margin: 4mm;
+@media print{
+  @page{
+    size:A4 landscape;
+    margin:4mm;
   }
 
-  body {
-    padding: 0;
-    zoom: 0.72;
+  body{
+    padding:0;
+    zoom:0.72;
   }
 
-  .nav-buttons {
-    display: none;
+  .nav-buttons{
+    display:none;
   }
 
-  .logo {
-    height: 45px;
+  .logo{
+    height:42px;
   }
 
-  table {
-    page-break-inside: avoid;
-  }
-
-  .table-wrap {
-    page-break-inside: avoid;
+  table{
+    page-break-inside:avoid;
   }
 }
 </style>
@@ -176,200 +155,188 @@ th {
 </div>
 
 <div class="title">MAPA DE DEVEDORES</div>
+<div id="dataMapa" class="data"></div>
 
 <div id="app" class="loading">A carregar mapa de devedores...</div>
 
 <script>
-const CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vSLUDSFALaFHQlkwlvXZT8UrwohxbgrHC99Evm1_MopNIRfRvjFgaeFjdQqE85IdYZiUIEY5gBQKl5w/pub?gid=2114637149&single=true&output=csv";
+const CSV_URL="https://docs.google.com/spreadsheets/d/e/2PACX-1vSLUDSFALaFHQlkwlvXZT8UrwohxbgrHC99Evm1_MopNIRfRvjFgaeFjdQqE85IdYZiUIEY5gBQKl5w/pub?gid=2114637149&single=true&output=csv";
 
-function parseCSV(text) {
-  const rows = [];
-  let row = [];
-  let cell = "";
-  let insideQuotes = false;
-
-  for (let i = 0; i < text.length; i++) {
-    const char = text[i];
-    const next = text[i + 1];
-
-    if (char === '"' && insideQuotes && next === '"') {
-      cell += '"';
-      i++;
-    } else if (char === '"') {
-      insideQuotes = !insideQuotes;
-    } else if (char === "," && !insideQuotes) {
-      row.push(cell.trim());
-      cell = "";
-    } else if ((char === "\n" || char === "\r") && !insideQuotes) {
-      if (cell !== "" || row.length > 0) {
-        row.push(cell.trim());
-        rows.push(row);
-        row = [];
-        cell = "";
-      }
-      if (char === "\r" && next === "\n") i++;
-    } else {
-      cell += char;
-    }
+function parseCSV(text){
+  const rows=[];let row=[],cell="",q=false;
+  for(let i=0;i<text.length;i++){
+    const c=text[i],n=text[i+1];
+    if(c=='"'&&q&&n=='"'){cell+='"';i++}
+    else if(c=='"'){q=!q}
+    else if(c==","&&!q){row.push(cell.trim());cell=""}
+    else if((c=="\n"||c=="\r")&&!q){
+      if(cell!==""||row.length){row.push(cell.trim());rows.push(row);row=[];cell=""}
+      if(c=="\r"&&n=="\n")i++;
+    }else cell+=c;
   }
-
-  if (cell !== "" || row.length > 0) {
-    row.push(cell.trim());
-    rows.push(row);
-  }
-
+  if(cell!==""||row.length){row.push(cell.trim());rows.push(row)}
   return rows;
 }
 
-function clean(v) {
-  return v ? v.trim() : "";
-}
+function clean(v){return v ? v.trim() : ""}
 
-function isNumberValue(v) {
-  return /[0-9]/.test(v || "");
-}
-
-function cellClass(value, rowText) {
-  let cls = "";
-
-  if (rowText.includes("SEGURADORAS") ||
-      rowText.includes("EMPRESAS PRIVADAS") ||
-      rowText.includes("EMPRESAS PÚBLICAS") ||
-      rowText.includes("EMPRESAS PUBLICAS")) {
-    cls += " bold italic";
+function findData(rows){
+  for(const r of rows){
+    const txt=r.join(" ").toUpperCase();
+    if(txt.includes("DATA")){
+      const found=r.find(c=>/\d{1,2}\/\d{1,2}\/\d{4}/.test(c));
+      if(found) return "DATA: " + found;
+      const joined=r.join(" ");
+      const m=joined.match(/DATA[:\s]*([0-9]{1,2}\/[0-9]{1,2}\/[0-9]{4})/i);
+      if(m) return "DATA: " + m[1];
+    }
   }
-
-  if (value.includes("-")) cls += " bold";
-
-  if (isNumberValue(value)) {
-    const n = value.replace(/,/g, "");
-    if (parseFloat(n) >= 300000) cls += " green";
-  }
-
-  return cls;
+  return "";
 }
 
-function renderTable(rows) {
-  let html = `
-  <div class="table-wrap">
+function colorClass(value){
+  if(!value) return "";
+  if(value.trim()==="-") return "";
+  const n=parseFloat(value.replace(/\./g,"").replace(",","."));
+  if(isNaN(n)) return "";
+  if(n >= 300000) return "green";
+  if(n > 0 && n < 20000) return "red";
+  return "";
+}
+
+function render(rows){
+  let html=`
   <table>
     <colgroup>
-      <col style="width:5%;">
-      <col style="width:12%;">
-      <col style="width:10%;">
-      <col style="width:10.5%;">
-      <col style="width:9.5%;">
-      <col style="width:11.7%;">
-      <col style="width:9.8%;">
-      <col style="width:10.8%;">
-      <col style="width:7.8%;">
-      <col style="width:10.8%;">
-      <col style="width:1%;">
-      <col style="width:13%;">
-      <col style="width:11%;">
+      <col style="width:5%">
+      <col style="width:15%">
+      <col style="width:8%">
+      <col style="width:9%">
+      <col style="width:9%">
+      <col style="width:9%">
+      <col style="width:9%">
+      <col style="width:8%">
+      <col style="width:9%">
+      <col style="width:11%">
+      <col style="width:10%">
     </colgroup>
+    <thead>
+      <tr>
+        <th>ITEM</th>
+        <th>PERIODO</th>
+        <th>60 Dias</th>
+        <th>25-04-2026</th>
+        <th>Piso</th>
+        <th>25-05-2026</th>
+        <th>PISO</th>
+        <th>CORRENTE</th>
+        <th>50% piso Abril</th>
+        <th>TOTAL EM DÍVIDA</th>
+        <th>TOTAL EM COBRANÇA</th>
+      </tr>
+      <tr>
+        <th></th>
+        <th>CLIENTE</th>
+        <th>JANEIRO</th>
+        <th>FEVEREIRO</th>
+        <th></th>
+        <th>MARÇO</th>
+        <th></th>
+        <th>ABRIL</th>
+        <th>MAIO</th>
+        <th></th>
+        <th></th>
+      </tr>
+    </thead>
     <tbody>
   `;
 
-  rows.forEach((r, index) => {
-    if (!r || r.every(c => !c)) return;
+  for(const r of rows){
+    if(!r || r.every(c=>!c)) continue;
 
-    const rowText = r.join(" ").toUpperCase();
+    const txt=r.join(" ").toUpperCase();
 
-    if (rowText.includes("MAPA DE DEVEDORES")) return;
+    if(txt.includes("MAPA DE DEVEDORES")) continue;
+    if(txt.includes("DATA:")) continue;
+    if(txt.includes("ITEM") && txt.includes("PERIODO")) continue;
+    if(txt.includes("CLIENTE") && txt.includes("JANEIRO")) continue;
+    if(txt.includes("TOTAL EM DÍVIDA") && r.length < 5) continue;
+    if(txt.includes("TOTAL PIO")) continue;
+    if(txt.includes("TOTAL VALOR EM COBRANÇA")) continue;
+    if(txt.includes("TOTAL PISO EM COBRANÇA")) continue;
 
-    const isHeader1 = rowText.includes("ITEM") && rowText.includes("PERIODO");
-    const isHeader2 = rowText.includes("CLIENTE") && rowText.includes("JANEIRO");
-    const isSubtotal = rowText.includes("SUBTOTAL");
-    const isTotal = rowText.includes("TOTAL") && !rowText.includes("TOTAL EM");
+    const row=[
+      clean(r[0]), clean(r[1]), clean(r[2]), clean(r[3]), clean(r[4]),
+      clean(r[5]), clean(r[6]), clean(r[7]), clean(r[8]), clean(r[9]), clean(r[10])
+    ];
 
-    let trClass = "";
-    if (isSubtotal) trClass = "subtotal";
-    if (isTotal && !rowText.includes("VALOR EM COBRANÇA")) trClass = "total-row";
+    const isGroup=txt.includes("SEGURADORAS") || txt.includes("EMPRESAS PRIVADAS") || txt.includes("EMPRESAS PÚBLICAS") || txt.includes("EMPRESAS PUBLICAS");
+    const isSubtotal=txt.includes("SUBTOTAL");
+    const isTotal=txt.startsWith("TOTAL") || row[1].toUpperCase()==="TOTAL";
 
-    html += `<tr class="${trClass}">`;
+    let trClass="";
+    if(isGroup) trClass="group-row";
+    if(isSubtotal) trClass="subtotal-row";
+    if(isTotal) trClass="total-row";
 
-    for (let i = 0; i < 13; i++) {
-      if (i === 10) {
-        html += `<td class="side-gap"></td>`;
-        continue;
-      }
+    html+=`<tr class="${trClass}">`;
 
-      const sourceIndex = i > 10 ? i - 1 : i;
-      const value = clean(r[sourceIndex]);
+    row.forEach((val,i)=>{
+      let cls="";
+      if(i===1) cls+=" left";
+      if(isGroup || isSubtotal || isTotal) cls+=" bold";
+      if(isGroup && i===1) cls+=" italic";
+      cls+=" " + colorClass(val);
+      html+=`<td class="${cls}">${val}</td>`;
+    });
 
-      let cls = "";
-      if (sourceIndex === 1) cls += " left";
-      if (isHeader1 || isHeader2) cls += " bold";
-      if (isSubtotal || isTotal) cls += " bold";
-      cls += cellClass(value, rowText);
+    html+=`</tr>`;
+  }
 
-      html += `<td class="${cls}">${value}</td>`;
-    }
-
-    html += `</tr>`;
-  });
-
-  html += `
-    </tbody>
-  </table>
-  </div>
-  `;
-
+  html+=`</tbody></table>`;
   return html;
 }
 
-function renderBottomSummary(rows) {
-  let valorCobranca = "";
-  let valorPiso = "";
+function renderSummary(rows){
+  let divida="", piso="", cobranca="", pisoCobranca="";
 
-  rows.forEach(r => {
-    const txt = r.join(" ").toUpperCase();
-    if (txt.includes("VALOR EM COBRANÇA")) {
-      valorCobranca = r.find(c => /[0-9]/.test(c)) || "";
-    }
-    if (txt.includes("PISO EM COBRANÇA")) {
-      valorPiso = r.find(c => /[0-9]/.test(c)) || "";
-    }
-  });
-
-  if (!valorCobranca && !valorPiso) return "";
+  for(const r of rows){
+    const txt=r.join(" ").toUpperCase();
+    const nums=r.filter(c=>/[0-9]/.test(c));
+    if(txt.includes("TOTAL EM DÍVIDA") && nums.length) divida=nums[nums.length-1];
+    if(txt.includes("TOTAL PIO") && nums.length) piso=nums[nums.length-1];
+    if(txt.includes("TOTAL VALOR EM COBRANÇA") && nums.length) cobranca=nums[nums.length-1];
+    if(txt.includes("TOTAL PISO EM COBRANÇA") && nums.length) pisoCobranca=nums[nums.length-1];
+  }
 
   return `
-  <table class="bottom-summary">
-    <tr>
-      <td><b>TOTAL</b></td>
-      <td>VALOR EM COBRANÇA</td>
-      <td>${valorCobranca}</td>
-    </tr>
-    <tr>
-      <td><b>TOTAL PISO</b></td>
-      <td>EM COBRANÇA</td>
-      <td>${valorPiso}</td>
-    </tr>
+  <table class="summary">
+    <tr><td><b>TOTAL</b></td><td>EM DÍVIDA</td><td>${divida}</td></tr>
+    <tr><td><b>TOTAL PIO</b></td><td></td><td>${piso}</td></tr>
+    <tr><td><b>TOTAL</b></td><td>VALOR EM COBRANÇA</td><td>${cobranca}</td></tr>
+    <tr><td><b>TOTAL PISO</b></td><td>EM COBRANÇA</td><td>${pisoCobranca}</td></tr>
   </table>`;
 }
 
-async function carregarDevedores() {
-  const app = document.getElementById("app");
+async function carregar(){
+  const app=document.getElementById("app");
+  try{
+    const resp=await fetch(CSV_URL);
+    const text=await resp.text();
+    const rows=parseCSV(text);
 
-  try {
-    const resp = await fetch(CSV_URL);
-    if (!resp.ok) throw new Error("Erro ao carregar Google Sheets");
+    document.getElementById("dataMapa").innerText=findData(rows);
 
-    const text = await resp.text();
-    const rows = parseCSV(text);
+    app.className="";
+    app.innerHTML=render(rows)+renderSummary(rows);
 
-    app.className = "";
-    app.innerHTML = renderTable(rows) + renderBottomSummary(rows);
-
-  } catch (e) {
-    app.innerHTML = "Erro ao carregar mapa de devedores. Verifique se o Google Sheet está publicado.";
+  }catch(e){
+    app.innerHTML="Erro ao carregar mapa de devedores.";
     console.error(e);
   }
 }
 
-carregarDevedores();
+carregar();
 </script>
 
 </body>
