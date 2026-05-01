@@ -3,41 +3,141 @@
 <head>
 <meta charset="UTF-8">
 <title>Mapa de Devedores</title>
+
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
-body{font-family:Arial,Helvetica,sans-serif;background:#fff;color:#000;padding:8px;font-size:12px}
+
+body{
+  font-family:Arial,Helvetica,sans-serif;
+  background:#fff;
+  color:#000;
+  padding:8px;
+  font-size:11px;
+}
+
 .logo{height:55px}
-.nav-buttons{position:absolute;top:13px;left:540px;display:flex;gap:65px}
-.nav-btn{min-width:130px;height:28px;padding:6px 14px;border:2px solid #e5392d;border-radius:6px;background:#fff;color:#000;text-decoration:none;font-size:11px;font-weight:bold;text-align:center}
-.nav-btn:hover,.nav-btn.active{background:#e5392d;color:#fff}
 
-.title{text-align:center;font-size:18px;font-weight:bold;margin-top:-10px}
-.data{text-align:center;font-size:13px;font-weight:bold;margin:4px 0 10px}
+.nav-buttons{
+  position:absolute;
+  top:13px;
+  left:540px;
+  display:flex;
+  gap:65px;
+}
 
-table{border-collapse:collapse;table-layout:fixed}
-.main-table{width:100%}
-th,td{border:1px solid #000;padding:2px 3px;height:20px;text-align:center;vertical-align:middle;white-space:nowrap}
+.nav-btn{
+  min-width:130px;
+  height:28px;
+  padding:6px 14px;
+  border:2px solid #e5392d;
+  border-radius:6px;
+  background:#fff;
+  color:#000;
+  text-decoration:none;
+  font-size:11px;
+  font-weight:bold;
+  text-align:center;
+}
+
+.nav-btn:hover,.nav-btn.active{
+  background:#e5392d;
+  color:#fff;
+}
+
+.title{
+  text-align:center;
+  font-size:18px;
+  font-weight:bold;
+  margin-top:-10px;
+}
+
+.data{
+  text-align:center;
+  font-size:13px;
+  font-weight:bold;
+  margin:4px 0 10px;
+}
+
+table{
+  border-collapse:collapse;
+  table-layout:fixed;
+}
+
+.main-table{
+  width:100%;
+}
+
+th,td{
+  border:1px solid #000;
+  padding:2px 3px;
+  height:20px;
+  text-align:center;
+  vertical-align:middle;
+  white-space:nowrap;
+}
+
 th{font-weight:bold}
+
 .left{text-align:left}
 .bold{font-weight:bold}
 .italic{font-style:italic}
 .green{color:#00b050}
 .red{color:#c00000}
 
-.group td,.subtotal td,.total td{font-weight:bold;border-top:2px solid #000;border-bottom:2px solid #000}
-.group td:nth-child(2){font-style:italic;text-align:left}
+.group td,
+.subtotal td,
+.total td{
+  font-weight:bold;
+  border-top:2px solid #000;
+  border-bottom:2px solid #000;
+}
 
-.summary{width:390px;margin-top:16px;font-size:14px}
-.summary td{border:none;border-bottom:2px solid #000;text-align:left;height:20px}
+.group td:nth-child(2){
+  font-style:italic;
+  text-align:left;
+}
 
-.loading{text-align:center;padding:30px;font-size:15px}
+.summary{
+  width:420px;
+  margin-top:14px;
+  font-size:13px;
+}
+
+.summary td{
+  border:none;
+  border-bottom:2px solid #000;
+  text-align:left;
+  height:20px;
+}
+
+.loading{
+  text-align:center;
+  padding:30px;
+  font-size:15px;
+}
 
 @media print{
-  @page{size:A4 landscape;margin:4mm}
-  body{padding:0;zoom:0.72}
-  .nav-buttons{display:none}
-  .logo{height:42px}
-  table{page-break-inside:avoid}
+  @page{
+    size:A4 landscape;
+    margin:4mm;
+  }
+
+  body{
+    padding:0;
+    zoom:0.72;
+  }
+
+  .nav-buttons{
+    display:none;
+  }
+
+  .logo{
+    height:42px;
+  }
+
+  table{
+    page-break-inside:avoid;
+  }
 }
 </style>
 </head>
@@ -62,40 +162,86 @@ th{font-weight:bold}
 const CSV_URL="https://docs.google.com/spreadsheets/d/e/2PACX-1vSLUDSFALaFHQlkwlvXZT8UrwohxbgrHC99Evm1_MopNIRfRvjFgaeFjdQqE85IdYZiUIEY5gBQKl5w/pub?gid=2114637149&single=true&output=csv";
 
 function parseCSV(text){
-  const rows=[];let row=[],cell="",q=false;
+  const rows=[];
+  let row=[],cell="",q=false;
+
   for(let i=0;i<text.length;i++){
-    const c=text[i],n=text[i+1];
-    if(c=='"'&&q&&n=='"'){cell+='"';i++}
-    else if(c=='"'){q=!q}
-    else if(c==","&&!q){row.push(cell.trim());cell=""}
-    else if((c=="\n"||c=="\r")&&!q){
-      if(cell!==""||row.length){row.push(cell.trim());rows.push(row);row=[];cell=""}
-      if(c=="\r"&&n=="\n")i++;
-    }else cell+=c;
+    const ch=text[i], next=text[i+1];
+
+    if(ch=='"' && q && next=='"'){
+      cell+='"';
+      i++;
+    }else if(ch=='"'){
+      q=!q;
+    }else if(ch=="," && !q){
+      row.push(cell.trim());
+      cell="";
+    }else if((ch=="\n" || ch=="\r") && !q){
+      if(cell!=="" || row.length){
+        row.push(cell.trim());
+        rows.push(row);
+        row=[];
+        cell="";
+      }
+      if(ch=="\r" && next=="\n") i++;
+    }else{
+      cell+=ch;
+    }
   }
-  if(cell!==""||row.length){row.push(cell.trim());rows.push(row)}
+
+  if(cell!=="" || row.length){
+    row.push(cell.trim());
+    rows.push(row);
+  }
+
   return rows;
 }
 
-function c(v){return v ? v.trim() : ""}
-function rowText(r){return r.join(" ").toUpperCase()}
+function c(v){
+  return v ? String(v).trim() : "";
+}
+
+function txt(r){
+  return r.join(" ").toUpperCase();
+}
 
 function getDate(rows){
   for(const r of rows){
-    const txt=r.join(" ");
-    const m=txt.match(/DATA[:\s]*([0-9]{1,2}\/[0-9]{1,2}\/[0-9]{4})/i);
+    const joined=r.join(" ");
+    const m=joined.match(/DATA[:\s]*([0-9]{1,2}\/[0-9]{1,2}\/[0-9]{4})/i);
     if(m) return "DATA: " + m[1];
+
+    for(const cell of r){
+      const d=String(cell).match(/[0-9]{1,2}\/[0-9]{1,2}\/[0-9]{4}/);
+      if(d) return "DATA: " + d[0];
+    }
   }
   return "";
 }
 
 function clsValue(v){
   if(!v || v==="-" ) return "";
-  const n=parseFloat(v.replace(/,/g,""));
+  const n=parseFloat(String(v).replace(/,/g,""));
   if(isNaN(n)) return "";
   if(n>=300000) return "green";
   if(n>0 && n<20000) return "red";
   return "";
+}
+
+function isUsefulRow(r){
+  const t=txt(r);
+
+  if(!r || r.every(x=>!x)) return false;
+  if(t.includes("MAPA DE DEVEDORES")) return false;
+  if(t.includes("DATA:")) return false;
+  if(t.includes("ITEM") && t.includes("PERIODO")) return false;
+  if(t.includes("CLIENTE") && t.includes("JANEIRO")) return false;
+  if(t.includes("TOTAL EM DÍVIDA") && r.length<8) return false;
+  if(t.includes("TOTAL PIO")) return false;
+  if(t.includes("TOTAL VALOR EM COBRANÇA")) return false;
+  if(t.includes("TOTAL PISO EM COBRANÇA")) return false;
+
+  return true;
 }
 
 function render(rows){
@@ -103,16 +249,17 @@ function render(rows){
 <table class="main-table">
 <colgroup>
   <col style="width:5%">
-  <col style="width:16%">
+  <col style="width:15%">
   <col style="width:8%">
-  <col style="width:9%">
+  <col style="width:8.5%">
   <col style="width:8%">
-  <col style="width:9%">
+  <col style="width:8.5%">
   <col style="width:8%">
-  <col style="width:9%">
-  <col style="width:9%">
-  <col style="width:10%">
-  <col style="width:10%">
+  <col style="width:8.5%">
+  <col style="width:8.5%">
+  <col style="width:8%">
+  <col style="width:11%">
+  <col style="width:11%">
 </colgroup>
 
 <thead>
@@ -126,6 +273,7 @@ function render(rows){
   <th>PISO</th>
   <th>CORRENTE</th>
   <th>50% piso Abril</th>
+  <th></th>
   <th rowspan="2">TOTAL EM DÍVIDA</th>
   <th rowspan="2">TOTAL EM COBRANÇA</th>
 </tr>
@@ -138,6 +286,7 @@ function render(rows){
   <th>MARÇO</th>
   <th></th>
   <th>ABRIL</th>
+  <th></th>
   <th>MAIO</th>
 </tr>
 </thead>
@@ -145,29 +294,50 @@ function render(rows){
 `;
 
   for(const r of rows){
-    if(!r || r.every(x=>!x)) continue;
+    if(!isUsefulRow(r)) continue;
 
-    const txt=rowText(r);
+    const t=txt(r);
 
-    if(txt.includes("MAPA DE DEVEDORES")) continue;
-    if(txt.includes("DATA:")) continue;
-    if(txt.includes("ITEM") && txt.includes("PERIODO")) continue;
-    if(txt.includes("CLIENTE") && txt.includes("JANEIRO")) continue;
+    /*
+      MAPEAMENTO FIXO DO GOOGLE SHEET:
+      A = r[0]
+      B = r[1]
+      C = r[2]
+      D = r[3]
+      E = r[4]
+      F = r[5]
+      G = r[6]
+      H = r[7]
+      I = r[8]
+      J = r[9]
+      K = r[10] ignorada
+      L = r[11] TOTAL EM DÍVIDA
+      M = r[12] TOTAL EM COBRANÇA
+    */
 
-    if(txt.includes("TOTAL EM DÍVIDA") && r.length < 6) continue;
-    if(txt.includes("TOTAL PIO")) continue;
-    if(txt.includes("TOTAL VALOR EM COBRANÇA")) continue;
-    if(txt.includes("TOTAL PISO EM COBRANÇA")) continue;
+    const row=[
+      c(r[0]),
+      c(r[1]),
+      c(r[2]),
+      c(r[3]),
+      c(r[4]),
+      c(r[5]),
+      c(r[6]),
+      c(r[7]),
+      c(r[8]),
+      c(r[9]),
+      c(r[11]),
+      c(r[12])
+    ];
 
-    // ⚠️ AQUI ESTÁ A CORREÇÃO IMPORTANTE
-    const row = [];
-    for(let i=0;i<11;i++){
-      row.push(c(r[i] || ""));
-    }
+    const isGroup=
+      t.includes("SEGURADORAS") ||
+      t.includes("EMPRESAS PRIVADAS") ||
+      t.includes("EMPRESAS PÚBLICAS") ||
+      t.includes("EMPRESAS PUBLICAS");
 
-    const isGroup=txt.includes("SEGURADORAS")||txt.includes("EMPRESAS PRIVADAS")||txt.includes("EMPRESAS PÚBLICAS")||txt.includes("EMPRESAS PUBLICAS");
-    const isSubtotal=txt.includes("SUBTOTAL");
-    const isTotal=txt.startsWith("TOTAL ");
+    const isSubtotal=t.includes("SUBTOTAL");
+    const isTotal=row[1].toUpperCase()==="TOTAL" || t.startsWith("TOTAL ");
 
     let trClass="";
     if(isGroup) trClass="group";
@@ -179,9 +349,9 @@ function render(rows){
     row.forEach((val,i)=>{
       let cl="";
       if(i===1) cl+=" left";
-      if(isGroup||isSubtotal||isTotal) cl+=" bold";
+      if(isGroup || isSubtotal || isTotal) cl+=" bold";
       if(isGroup && i===1) cl+=" italic";
-      cl+=" "+clsValue(val);
+      cl+=" " + clsValue(val);
 
       html+=`<td class="${cl}">${val}</td>`;
     });
@@ -189,20 +359,36 @@ function render(rows){
     html+=`</tr>`;
   }
 
-  html+=`</tbody></table>`;
+  html+=`
+</tbody>
+</table>`;
+
   return html;
 }
 
 function summary(rows){
   let divida="",pio="",cobranca="",pisoCob="";
+
   for(const r of rows){
-    const txt=rowText(r);
-    const nums=r.filter(x=>/[0-9]/.test(x));
-    if(txt.includes("TOTAL EM DÍVIDA")) divida=nums[nums.length-1]||"";
-    if(txt.includes("TOTAL PIO")) pio=nums[nums.length-1]||"";
-    if(txt.includes("TOTAL VALOR EM COBRANÇA")) cobranca=nums[nums.length-1]||"";
-    if(txt.includes("TOTAL PISO EM COBRANÇA")) pisoCob=nums[nums.length-1]||"";
+    const t=txt(r);
+
+    if(t.includes("TOTAL EM DÍVIDA")){
+      divida=c(r[1]) || c(r[2]) || c(r[11]) || c(r[12]);
+    }
+
+    if(t.includes("TOTAL PIO")){
+      pio=c(r[1]) || c(r[2]) || c(r[11]) || c(r[12]);
+    }
+
+    if(t.includes("TOTAL VALOR EM COBRANÇA")){
+      cobranca=c(r[1]) || c(r[2]) || c(r[11]) || c(r[12]);
+    }
+
+    if(t.includes("TOTAL PISO EM COBRANÇA")){
+      pisoCob=c(r[1]) || c(r[2]) || c(r[11]) || c(r[12]);
+    }
   }
+
   return `
 <table class="summary">
 <tr><td><b>TOTAL</b></td><td>EM DÍVIDA</td><td>${divida}</td></tr>
@@ -214,18 +400,26 @@ function summary(rows){
 
 async function carregar(){
   const app=document.getElementById("app");
+
   try{
-    const resp=await fetch(CSV_URL);
+    const resp=await fetch(CSV_URL + "&t=" + Date.now(), {cache:"no-store"});
+    if(!resp.ok) throw new Error("Erro HTTP: " + resp.status);
+
     const text=await resp.text();
     const rows=parseCSV(text);
+
     document.getElementById("dataMapa").innerText=getDate(rows);
+
     app.className="";
     app.innerHTML=render(rows)+summary(rows);
+
   }catch(e){
-    app.innerHTML="Erro ao carregar mapa de devedores.";
+    app.className="";
+    app.innerHTML="Erro ao carregar mapa de devedores. Verifique se o Google Sheet está publicado.";
     console.error(e);
   }
 }
+
 carregar();
 </script>
 
