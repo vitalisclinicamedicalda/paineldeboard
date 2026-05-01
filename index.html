@@ -1,467 +1,329 @@
 from pathlib import Path
-import zipfile
-
 html = r'''<!DOCTYPE html>
 <html lang="pt">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>MAPA DE SALDOS - VITALIS</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>MAPA DE SALDOS - VITALIS</title>
+  <style>
+    :root{
+      --azul:#0B2F5B;
+      --azul2:#123E72;
+      --verde:#00A86B;
+      --cinza:#F4F7FA;
+      --linha:#D9E2EC;
+      --texto:#1F2937;
+      --vermelho:#B91C1C;
+    }
 
-<style>
-*{
-  box-sizing:border-box;
-}
+    *{box-sizing:border-box}
 
-html, body{
-  margin:0;
-  padding:0;
-  background:#fff;
-  font-family:Arial, Helvetica, sans-serif;
-  color:#000;
-}
+    body{
+      margin:0;
+      font-family:Arial, Helvetica, sans-serif;
+      background:var(--cinza);
+      color:var(--texto);
+    }
 
-body{
-  padding:4px;
-}
+    .page{
+      max-width:1200px;
+      margin:24px auto;
+      padding:18px;
+      background:#fff;
+      border-radius:16px;
+      box-shadow:0 10px 30px rgba(0,0,0,.08);
+    }
 
-.sheet-page{
-  width:100%;
-  max-width:none;
-  margin:0;
-}
+    .topbar{
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      gap:16px;
+      padding:14px 18px;
+      background:linear-gradient(135deg,var(--azul),var(--azul2));
+      color:white;
+      border-radius:14px;
+      margin-bottom:18px;
+    }
 
-table{
-  width:100%;
-  border-collapse:collapse;
-  table-layout:fixed;
-  background:#fff;
-}
+    .topbar h1{
+      margin:0;
+      font-size:22px;
+      letter-spacing:.3px;
+    }
 
-td, th{
-  border:1px solid #000;
-  padding:3px 4px;
-  font-size:10px;
-  line-height:1.15;
-  vertical-align:middle;
-  color:#000;
-  white-space:normal;
-  overflow:hidden;
-  text-overflow:clip;
-}
+    .actions{
+      display:flex;
+      gap:10px;
+      flex-wrap:wrap;
+    }
 
-th{
-  text-align:center;
-  font-weight:bold;
-  background:#fff;
-}
+    button{
+      border:0;
+      padding:10px 14px;
+      border-radius:10px;
+      cursor:pointer;
+      font-weight:700;
+      color:white;
+      background:var(--verde);
+    }
 
-td{
-  font-weight:600;
-}
+    button.secondary{background:#64748B}
 
-.title-row td{
-  text-align:center;
-  font-weight:900;
-  font-size:14px;
-  border:2px solid #000;
-  padding:4px;
-  background:#fff;
-}
+    .status{
+      font-size:13px;
+      color:#475569;
+      margin:6px 0 14px;
+    }
 
-.header-row th{
-  text-align:center;
-  font-weight:900;
-  border:2px solid #000;
-}
+    .table-wrap{
+      overflow-x:auto;
+      border:1px solid var(--linha);
+      border-radius:12px;
+    }
 
-.total-row td{
-  background:#bfbfbf;
-  font-weight:900;
-  border-top:2px solid #000;
-  border-bottom:2px solid #000;
-}
+    table{
+      width:100%;
+      border-collapse:collapse;
+      font-size:13px;
+    }
 
-.grand-total-row td{
-  background:#fff;
-  font-weight:900;
-  border-top:2px solid #000;
-  border-bottom:2px solid #000;
-}
+    th{
+      background:var(--azul);
+      color:white;
+      padding:10px 8px;
+      text-align:center;
+      border:1px solid #ffffff33;
+      white-space:nowrap;
+    }
 
-.total-label{
-  text-align:center !important;
-  font-weight:900 !important;
-  font-style:italic;
-}
+    td{
+      padding:8px;
+      border:1px solid var(--linha);
+      text-align:right;
+      white-space:nowrap;
+    }
 
-.section-title-row td{
-  text-align:center;
-  font-weight:900;
-  font-size:13px;
-  border:2px solid #000;
-  padding:5px;
-  background:#fff;
-}
+    td:first-child, td:nth-child(2){
+      text-align:left;
+      font-weight:600;
+    }
 
-.blank-row td{
-  height:16px;
-  border:none;
-  background:#fff;
-  padding:0;
-}
+    tr:nth-child(even):not(.total-row){background:#F8FAFC}
 
-.pos-title-spacer td{
-  height:16px;
-  border:none;
-  background:#fff;
-}
+    .total-row{
+      background:#E8F4EF !important;
+      font-weight:800;
+      color:#063F2D;
+    }
 
-.numeric{
-  text-align:right;
-  white-space:nowrap;
-  font-weight:900;
-  font-style:italic;
-}
+    .total-row td{
+      border-top:2px solid var(--verde);
+      border-bottom:2px solid var(--verde);
+    }
 
-.center{
-  text-align:center;
-}
+    .negative{color:var(--vermelho);font-weight:700}
 
-.red{
-  color:red !important;
-  font-weight:900 !important;
-}
+    .error{
+      display:none;
+      margin:12px 0;
+      padding:12px;
+      background:#FEE2E2;
+      color:#7F1D1D;
+      border:1px solid #FCA5A5;
+      border-radius:10px;
+      font-weight:700;
+    }
 
-col:nth-child(1){width:2.5%;}
-col:nth-child(2){width:4%;}
-col:nth-child(3){width:22%;}
-col:nth-child(4){width:13%;}
-col:nth-child(5){width:8%;}
-col:nth-child(6){width:8%;}
-col:nth-child(7){width:9%;}
-col:nth-child(8){width:9%;}
-col:nth-child(9){width:10%;}
-col:nth-child(10){width:6%;}
-col:nth-child(11){width:6%;}
-col:nth-child(12){width:6%;}
-
-@page{
-  size:A4 landscape;
-  margin:5mm;
-}
-
-@media print{
-  body{
-    padding:0;
-  }
-
-  td, th{
-    font-size:7px;
-    padding:1.5px 2px;
-    line-height:1.05;
-  }
-
-  .title-row td{
-    font-size:10px;
-    padding:2px;
-  }
-
-  .section-title-row td{
-    font-size:9px;
-    padding:2px;
-  }
-
-  .blank-row td,
-  .pos-title-spacer td{
-    height:6px;
-  }
-}
-</style>
+    @media print{
+      @page{size:A4 landscape;margin:7mm}
+      body{background:white}
+      .page{
+        margin:0;
+        max-width:none;
+        box-shadow:none;
+        border-radius:0;
+        padding:0;
+      }
+      .actions,.status,.error{display:none!important}
+      .topbar{
+        border-radius:0;
+        padding:8px 12px;
+        margin-bottom:8px;
+      }
+      .topbar h1{font-size:16px}
+      table{font-size:9px}
+      th,td{padding:4px}
+      .table-wrap{overflow:visible;border:0}
+    }
+  </style>
 </head>
 
 <body>
-<div class="sheet-page">
-  <table id="sheetTable"></table>
-</div>
+  <main class="page">
+    <div class="topbar">
+      <h1>MAPA DE SALDOS - VITALIS</h1>
+      <div class="actions">
+        <button onclick="window.print()">Imprimir / Guardar PDF</button>
+        <button class="secondary" onclick="carregarDados()">Actualizar</button>
+      </div>
+    </div>
 
-<script>
-const CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vSLUDSFALaFHQlkwlvXZT8UrwohxbgrHC99Evm1_MopNIRfRvjFgaeFjdQqE85IdYZiUIEY5gBQKl5w/pub?gid=0&single=true&output=csv";
+    <div id="status" class="status">A carregar dados...</div>
+    <div id="erro" class="error"></div>
 
-function parseCSV(text){
-  const rows = [];
-  let row = [];
-  let cell = "";
-  let insideQuotes = false;
+    <div class="table-wrap">
+      <table id="tabela">
+        <thead id="thead"></thead>
+        <tbody id="tbody"></tbody>
+      </table>
+    </div>
+  </main>
 
-  for(let i = 0; i < text.length; i++){
-    const ch = text[i];
-    const next = text[i + 1];
+  <script>
+    const CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vQUaHKZNpClWM4hFM-RV9A1cDbrS_e4gBSqrrKMErc0DF5ChKce-T_1DU7RiWxw6yb2CmoNisA24Ua0/pub?gid=0&single=true&output=csv";
 
-    if(ch === '"' && insideQuotes && next === '"'){
-      cell += '"';
-      i++;
-    }else if(ch === '"'){
-      insideQuotes = !insideQuotes;
-    }else if(ch === "," && !insideQuotes){
-      row.push(cell);
-      cell = "";
-    }else if((ch === "\n" || ch === "\r") && !insideQuotes){
-      if(ch === "\r" && next === "\n") i++;
-      row.push(cell);
-      rows.push(row);
-      row = [];
-      cell = "";
-    }else{
-      cell += ch;
-    }
-  }
+    function parseCSV(texto){
+      const linhas = [];
+      let linha = [];
+      let valor = "";
+      let dentroAspas = false;
 
-  if(cell !== "" || row.length){
-    row.push(cell);
-    rows.push(row);
-  }
+      for(let i=0;i<texto.length;i++){
+        const c = texto[i];
+        const n = texto[i+1];
 
-  return rows;
-}
-
-function cleanCell(value){
-  return String(value ?? "").trim();
-}
-
-function normalize(value){
-  return cleanCell(value)
-    .toUpperCase()
-    .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g,"")
-    .replace(/\s+/g," ");
-}
-
-function compact(value){
-  return normalize(value).replace(/[^A-Z0-9]/g,"");
-}
-
-function rowText(row){
-  return normalize(row.map(cleanCell).filter(Boolean).join(" "));
-}
-
-function isEmptyRow(row){
-  return row.every(cell => cleanCell(cell) === "");
-}
-
-function isNumericLike(value){
-  const s = cleanCell(value);
-  if(!s) return false;
-  return /\d/.test(s) && (
-    /MZN|MT|USD|EUR/i.test(s) ||
-    /^[\d\s.,()-]+$/.test(s)
-  );
-}
-
-function isHeaderRow(row){
-  return row.some(cell => normalize(cell) === "ITEM") &&
-         row.some(cell => compact(cell).includes("SALDODAEMPRESA"));
-}
-
-function isMainTitle(row){
-  return compact(rowText(row)).includes("MAPADESALDOSVITALIS");
-}
-
-function isCoopmedTitle(row){
-  return compact(rowText(row)).includes("MAPADESALDOSCOOPMED");
-}
-
-function isPosTitle(row){
-  const c = compact(rowText(row));
-  return c.includes("CONTROLEDODESCONTODOPOS") || c.includes("CONTROLODODESCONTODOPOS");
-}
-
-function isTotalRow(row){
-  return compact(rowText(row)).includes("TOTAL");
-}
-
-function isGrandTotal(row){
-  const c = compact(rowText(row));
-  return c.includes("TOTALDOSALDODAEMPRESA") || c.includes("TOTALSALDODAEMPRESA");
-}
-
-function getTotalLabel(row){
-  const candidates = row.map(cleanCell).filter(Boolean);
-  const total = candidates.find(c => compact(c).includes("TOTAL"));
-  return total || "TOTAL";
-}
-
-function lastNumericCell(row){
-  for(let i = row.length - 1; i >= 0; i--){
-    if(isNumericLike(row[i])) return {index:i, value:cleanCell(row[i])};
-  }
-  return {index:-1, value:""};
-}
-
-function padRow(row, count){
-  const out = row.map(cleanCell);
-  while(out.length < count) out.push("");
-  return out.slice(0, count);
-}
-
-function addCell(tr, text, tagName, className, colSpan){
-  const td = document.createElement(tagName || "td");
-  td.textContent = cleanCell(text);
-  if(className) td.className = className;
-  if(colSpan && colSpan > 1) td.colSpan = colSpan;
-  tr.appendChild(td);
-  return td;
-}
-
-function addBlank(table, colCount, className){
-  const tr = document.createElement("tr");
-  tr.className = className || "blank-row";
-  addCell(tr, "", "td", "", colCount);
-  table.appendChild(tr);
-}
-
-function addTitle(table, text, colCount, className){
-  const tr = document.createElement("tr");
-  tr.className = className || "title-row";
-  addCell(tr, text, "td", "", colCount);
-  table.appendChild(tr);
-}
-
-function renderNormalRow(table, row, colCount, asHeader){
-  const tr = document.createElement("tr");
-  if(asHeader) tr.className = "header-row";
-
-  row = padRow(row, colCount);
-
-  row.forEach((cell) => {
-    const value = cleanCell(cell);
-    const tag = asHeader ? "th" : "td";
-    let cls = "";
-
-    if(!asHeader && isNumericLike(value)) cls = "numeric";
-    if(!asHeader && ["BCI","MOZA","FNB","STD","POS"].includes(normalize(value))) cls = "center";
-    if(/548[,.]743[,.]60/.test(value.replace(/\s/g,""))) cls = "red numeric";
-
-    addCell(tr, value, tag, cls);
-  });
-
-  table.appendChild(tr);
-}
-
-function renderTotalRow(table, row, colCount){
-  row = padRow(row, colCount);
-  const tr = document.createElement("tr");
-  tr.className = isGrandTotal(row) ? "grand-total-row" : "total-row";
-
-  const label = getTotalLabel(row);
-
-  // Simula o merge do Excel:
-  // da coluna ITEM até RESPONSÁVEL DA CONTA = 6 primeiras colunas.
-  addCell(tr, label, "td", "total-label", 6);
-
-  // Mantém os 3 valores financeiros na posição correcta:
-  // SALDO DA EMPRESA, SALDO DO BANCO, SALDO DISPONÍVEL.
-  addCell(tr, row[6] || "", "td", isNumericLike(row[6]) ? "numeric" : "");
-  addCell(tr, row[7] || "", "td", isNumericLike(row[7]) ? "numeric" : "");
-  addCell(tr, row[8] || "", "td", isNumericLike(row[8]) ? "numeric" : "");
-
-  // VALOR POR PAGAR, DEFICE, OBS
-  addCell(tr, row[9] || "", "td", isNumericLike(row[9]) ? "numeric" : "");
-  addCell(tr, row[10] || "", "td", isNumericLike(row[10]) ? "numeric" : "");
-  addCell(tr, row[11] || "", "td", "");
-
-  table.appendChild(tr);
-}
-
-function render(data){
-  const table = document.getElementById("sheetTable");
-  table.innerHTML = "";
-
-  const colCount = 12;
-
-  const colgroup = document.createElement("colgroup");
-  for(let i = 0; i < colCount; i++){
-    colgroup.appendChild(document.createElement("col"));
-  }
-  table.appendChild(colgroup);
-
-  let rows = data
-    .map(row => row.map(cleanCell))
-    .filter(row => !isEmptyRow(row));
-
-  // Começa onde existe o título principal ou, se não existir, no cabeçalho ITEM.
-  let start = rows.findIndex(isMainTitle);
-  if(start < 0) start = rows.findIndex(isHeaderRow);
-  if(start < 0) start = 0;
-
-  rows = rows.slice(start);
-
-  rows.forEach((row, index) => {
-    const text = rowText(row);
-
-    if(isMainTitle(row)){
-      addTitle(table, "MAPA DE SALDOS - VITALIS", colCount, "title-row");
-      return;
-    }
-
-    if(isCoopmedTitle(row)){
-      addBlank(table, colCount, "blank-row");
-      addTitle(table, "MAPA DE SALDOS - COOPMED", colCount, "section-title-row");
-      return;
-    }
-
-    if(isPosTitle(row)){
-      addBlank(table, colCount, "pos-title-spacer");
-      addTitle(table, "CONTROLE DO DESCONTO DO POS", 10, "section-title-row");
-      return;
-    }
-
-    if(isHeaderRow(row)){
-      renderNormalRow(table, row, colCount, true);
-      return;
-    }
-
-    if(isTotalRow(row)){
-      renderTotalRow(table, row, colCount);
-
-      if(isGrandTotal(row)){
-        addBlank(table, colCount, "blank-row");
+        if(c === '"' && dentroAspas && n === '"'){
+          valor += '"';
+          i++;
+        }else if(c === '"'){
+          dentroAspas = !dentroAspas;
+        }else if(c === ',' && !dentroAspas){
+          linha.push(valor.trim());
+          valor = "";
+        }else if((c === '\n' || c === '\r') && !dentroAspas){
+          if(valor || linha.length){
+            linha.push(valor.trim());
+            linhas.push(linha);
+            linha = [];
+            valor = "";
+          }
+          if(c === '\r' && n === '\n') i++;
+        }else{
+          valor += c;
+        }
       }
-      return;
+
+      if(valor || linha.length){
+        linha.push(valor.trim());
+        linhas.push(linha);
+      }
+
+      return linhas.filter(l => l.some(c => c !== ""));
     }
 
-    renderNormalRow(table, row, colCount, false);
-  });
-}
+    function numeroBR(v){
+      if(v === null || v === undefined) return "";
+      const txt = String(v).replace(/\s/g,"").replace(/[^\d,.-]/g,"");
+      if(!txt) return "";
+      let n;
+      if(txt.includes(",") && txt.includes(".")){
+        n = Number(txt.replace(/\./g,"").replace(",","."));
+      }else if(txt.includes(",")){
+        n = Number(txt.replace(",","."));
+      }else{
+        n = Number(txt);
+      }
+      return Number.isFinite(n) ? n : "";
+    }
 
-async function load(){
-  try{
-    const response = await fetch(CSV_URL + "&cache=" + Date.now(), {cache:"no-store"});
-    if(!response.ok) throw new Error("Erro HTTP " + response.status);
-    const text = await response.text();
-    const data = parseCSV(text);
-    render(data);
-  }catch(error){
-    document.body.innerHTML = "<div style='padding:20px;font-family:Arial;color:#b90f0a;font-weight:bold'>Erro ao carregar o Google Sheets. Confirme se o ficheiro está publicado como CSV.</div>";
-    console.error(error);
-  }
-}
+    function formatar(v){
+      const n = numeroBR(v);
+      if(n === "") return v || "";
+      return n.toLocaleString("pt-MZ", {
+        minimumFractionDigits:2,
+        maximumFractionDigits:2
+      });
+    }
 
-load();
-</script>
+    function ehTotal(linha){
+      return linha.some(c => {
+        const t = String(c || "").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g,"");
+        return t.includes("total") ||
+               t.includes("nivel banco final") ||
+               t.includes("mzn-moza") ||
+               t.includes("saldo da empresa");
+      });
+    }
+
+    function renderizar(linhas){
+      const thead = document.getElementById("thead");
+      const tbody = document.getElementById("tbody");
+      thead.innerHTML = "";
+      tbody.innerHTML = "";
+
+      if(!linhas.length) throw new Error("A folha não devolveu dados.");
+
+      const cabecalho = linhas[0];
+      const trHead = document.createElement("tr");
+
+      cabecalho.forEach(c => {
+        const th = document.createElement("th");
+        th.textContent = c || "";
+        trHead.appendChild(th);
+      });
+
+      thead.appendChild(trHead);
+
+      linhas.slice(1).forEach(linha => {
+        const tr = document.createElement("tr");
+        if(ehTotal(linha)) tr.classList.add("total-row");
+
+        cabecalho.forEach((_, i) => {
+          const td = document.createElement("td");
+          const valor = linha[i] || "";
+          const n = numeroBR(valor);
+
+          td.textContent = n === "" ? valor : formatar(valor);
+          if(n !== "" && n < 0) td.classList.add("negative");
+
+          tr.appendChild(td);
+        });
+
+        tbody.appendChild(tr);
+      });
+    }
+
+    async function carregarDados(){
+      const status = document.getElementById("status");
+      const erro = document.getElementById("erro");
+
+      erro.style.display = "none";
+      erro.textContent = "";
+      status.textContent = "A carregar dados...";
+
+      try{
+        const resposta = await fetch(CSV_URL + "&cache=" + Date.now(), {cache:"no-store"});
+        if(!resposta.ok) throw new Error("Não foi possível ligar ao Google Sheets.");
+
+        const texto = await resposta.text();
+        const linhas = parseCSV(texto);
+
+        renderizar(linhas);
+        status.textContent = "Actualizado em: " + new Date().toLocaleString("pt-MZ");
+      }catch(e){
+        erro.textContent = "Erro: " + e.message;
+        erro.style.display = "block";
+        status.textContent = "Falha no carregamento dos dados.";
+      }
+    }
+
+    carregarDados();
+    setInterval(carregarDados, 60000);
+  </script>
 </body>
-</html>
-'''
+</html>'''
 
-out = Path('/mnt/data/index_mapa_saldos_excel_fiel.html')
-out.write_text(html, encoding='utf-8')
-
-zip_path = Path('/mnt/data/mapa_saldos_excel_fiel_github.zip')
-readme = Path('/mnt/data/README.txt')
-readme.write_text("Carregue o ficheiro index.html na raiz do repositório GitHub Pages.\n", encoding='utf-8')
-with zipfile.ZipFile(zip_path, 'w', zipfile.ZIP_DEFLATED) as z:
-    z.write(out, 'index.html')
-    z.write(readme, 'README.txt')
-
-print(out)
-print(zip_path)
+path = Path("/mnt/data/index.html")
+path.write_text(html, encoding="utf-8")
+print(path)
