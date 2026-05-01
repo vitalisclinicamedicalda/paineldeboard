@@ -180,7 +180,7 @@ td {
 <div id="app" class="loading">A carregar despesas...</div>
 
 <script>
-(function protegerPagina(){
+function protegerPagina(){
   const auth = sessionStorage.getItem("painel_board_auth");
   const loginTime = Number(sessionStorage.getItem("painel_board_login_time"));
   const agora = Date.now();
