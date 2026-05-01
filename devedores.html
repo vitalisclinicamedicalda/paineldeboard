@@ -359,6 +359,7 @@ function render(rows){
 
   return html;
 }
+
 function summary(rows){
   let html = `<table class="summary">`;
 
@@ -379,14 +380,11 @@ function summary(rows){
 
     count++;
 
-    // 🔒 LIMITA A 4 LINHAS (igual ao PDF)
     if(count === 4) break;
   }
 
   html += `</table>`;
   return html;
-}
-
 }
 
 async function carregar(){
