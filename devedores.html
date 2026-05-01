@@ -103,17 +103,18 @@ function render(rows){
 <table class="main-table">
 <colgroup>
   <col style="width:5%">
-  <col style="width:13%">
+  <col style="width:16%">
   <col style="width:8%">
-  <col style="width:8.5%">
+  <col style="width:9%">
   <col style="width:8%">
-  <col style="width:9.5%">
+  <col style="width:9%">
   <col style="width:8%">
-  <col style="width:8.8%">
-  <col style="width:8.8%">
-  <col style="width:11%">
-  <col style="width:11%">
+  <col style="width:9%">
+  <col style="width:9%">
+  <col style="width:10%">
+  <col style="width:10%">
 </colgroup>
+
 <thead>
 <tr>
   <th>ITEM</th>
@@ -124,7 +125,7 @@ function render(rows){
   <th>25-05-2026</th>
   <th>PISO</th>
   <th>CORRENTE</th>
-  <th></th>
+  <th>50% piso Abril</th>
   <th rowspan="2">TOTAL EM DÍVIDA</th>
   <th rowspan="2">TOTAL EM COBRANÇA</th>
 </tr>
@@ -137,39 +138,54 @@ function render(rows){
   <th>MARÇO</th>
   <th></th>
   <th>ABRIL</th>
-  <th>50% piso Abril<br>MAIO</th>
+  <th>MAIO</th>
 </tr>
 </thead>
-<tbody>`;
+<tbody>
+`;
 
   for(const r of rows){
-    const txt=rowText(r);
     if(!r || r.every(x=>!x)) continue;
+
+    const txt=rowText(r);
+
     if(txt.includes("MAPA DE DEVEDORES")) continue;
     if(txt.includes("DATA:")) continue;
     if(txt.includes("ITEM") && txt.includes("PERIODO")) continue;
     if(txt.includes("CLIENTE") && txt.includes("JANEIRO")) continue;
-    if(txt.includes("TOTAL EM DÍVIDA") && r.length<6) continue;
+
+    if(txt.includes("TOTAL EM DÍVIDA") && r.length < 6) continue;
     if(txt.includes("TOTAL PIO")) continue;
     if(txt.includes("TOTAL VALOR EM COBRANÇA")) continue;
     if(txt.includes("TOTAL PISO EM COBRANÇA")) continue;
 
-    const row=[c(r[0]),c(r[1]),c(r[2]),c(r[3]),c(r[4]),c(r[5]),c(r[6]),c(r[7]),c(r[8]),c(r[9]),c(r[10])];
+    // ⚠️ AQUI ESTÁ A CORREÇÃO IMPORTANTE
+    const row = [];
+    for(let i=0;i<11;i++){
+      row.push(c(r[i] || ""));
+    }
 
     const isGroup=txt.includes("SEGURADORAS")||txt.includes("EMPRESAS PRIVADAS")||txt.includes("EMPRESAS PÚBLICAS")||txt.includes("EMPRESAS PUBLICAS");
     const isSubtotal=txt.includes("SUBTOTAL");
-    const isTotal=row[1].toUpperCase()==="TOTAL"||txt.startsWith("TOTAL ");
-    const trClass=isGroup?"group":isSubtotal?"subtotal":isTotal?"total":"";
+    const isTotal=txt.startsWith("TOTAL ");
+
+    let trClass="";
+    if(isGroup) trClass="group";
+    else if(isSubtotal) trClass="subtotal";
+    else if(isTotal) trClass="total";
 
     html+=`<tr class="${trClass}">`;
+
     row.forEach((val,i)=>{
       let cl="";
       if(i===1) cl+=" left";
       if(isGroup||isSubtotal||isTotal) cl+=" bold";
-      if(isGroup&&i===1) cl+=" italic";
+      if(isGroup && i===1) cl+=" italic";
       cl+=" "+clsValue(val);
+
       html+=`<td class="${cl}">${val}</td>`;
     });
+
     html+=`</tr>`;
   }
 
