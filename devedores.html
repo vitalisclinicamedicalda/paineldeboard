@@ -98,16 +98,27 @@ th{font-weight:bold}
 }
 
 .summary{
-  width:420px;
+  width:500px;
   margin-top:14px;
-  font-size:13px;
+  font-size:14px;
 }
 
 .summary td{
   border:none;
-  border-bottom:2px solid #000;
+  border-bottom:1px solid #000;
   text-align:left;
-  height:20px;
+  height:24px;
+  padding:2px 4px;
+}
+
+.summary td:first-child{
+  width:70%;
+  font-weight:bold;
+}
+
+.summary td:last-child{
+  width:30%;
+  text-align:right;
 }
 
 .loading{
@@ -298,23 +309,6 @@ function render(rows){
 
     const t=txt(r);
 
-    /*
-      MAPEAMENTO FIXO DO GOOGLE SHEET:
-      A = r[0]
-      B = r[1]
-      C = r[2]
-      D = r[3]
-      E = r[4]
-      F = r[5]
-      G = r[6]
-      H = r[7]
-      I = r[8]
-      J = r[9]
-      K = r[10] ignorada
-      L = r[11] TOTAL EM DÍVIDA
-      M = r[12] TOTAL EM COBRANÇA
-    */
-
     const row=[
       c(r[0]),
       c(r[1]),
@@ -367,35 +361,24 @@ function render(rows){
 }
 
 function summary(rows){
-  let divida="",pio="",cobranca="",pisoCob="";
+  let html = `<table class="summary">`;
 
-  for(const r of rows){
-    const t=txt(r);
+  for(let i = 27; i < rows.length; i++){
+    const texto = c(rows[i][0]);
+    const valor = c(rows[i][3]);
 
-    if(t.includes("TOTAL EM DÍVIDA")){
-      divida=c(r[1]) || c(r[2]) || c(r[11]) || c(r[12]);
-    }
+    if(!texto && !valor) continue;
 
-    if(t.includes("TOTAL PISO")){
-      pio=c(r[1]) || c(r[2]) || c(r[11]) || c(r[12]);
-    }
-
-    if(t.includes("TOTAL VALOR EM COBRANÇA")){
-      cobranca=c(r[1]) || c(r[2]) || c(r[11]) || c(r[12]);
-    }
-
-    if(t.includes("TOTAL PISO EM COBRANÇA")){
-      pisoCob=c(r[1]) || c(r[2]) || c(r[11]) || c(r[12]);
-    }
+    html += `
+      <tr>
+        <td><b>${texto}</b></td>
+        <td>${valor}</td>
+      </tr>
+    `;
   }
 
-  return `
-<table class="summary">
-<tr><td><b>TOTAL</b></td><td>EM DÍVIDA</td><td>${divida}</td></tr>
-<tr><td><b>TOTAL PIO</b></td><td></td><td>${pio}</td></tr>
-<tr><td><b>TOTAL</b></td><td>VALOR EM COBRANÇA</td><td>${cobranca}</td></tr>
-<tr><td><b>TOTAL PISO</b></td><td>EM COBRANÇA</td><td>${pisoCob}</td></tr>
-</table>`;
+  html += `</table>`;
+  return html;
 }
 
 async function carregar(){
