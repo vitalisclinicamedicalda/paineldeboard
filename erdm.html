@@ -1,0 +1,347 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+<meta charset="UTF-8">
+<title>Extrato ERDM</title>
+
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+
+body{
+  font-family:Arial, Helvetica, sans-serif;
+  background:#fff;
+  color:#000;
+  padding:10px 14px;
+  font-size:10px;
+}
+
+.logo{height:55px}
+
+.nav-buttons{
+  position:absolute;
+  top:13px;
+  left:540px;
+  display:flex;
+  gap:65px;
+}
+
+.nav-btn{
+  min-width:130px;
+  height:28px;
+  padding:6px 14px;
+  border:2px solid #e5392d;
+  border-radius:6px;
+  background:#fff;
+  color:#000;
+  text-decoration:none;
+  font-size:11px;
+  font-weight:bold;
+  text-align:center;
+}
+
+.nav-btn:hover,.nav-btn.active{
+  background:#e5392d;
+  color:#fff;
+}
+
+.top{
+  display:flex;
+  justify-content:space-between;
+  align-items:flex-start;
+  margin-bottom:28px;
+}
+
+.main-title{
+  text-align:center;
+  font-weight:bold;
+  font-size:11px;
+  margin-top:20px;
+}
+
+.erdm{
+  font-weight:bold;
+  font-style:italic;
+  font-size:14px;
+}
+
+.date{
+  text-align:right;
+  font-size:10px;
+  margin-top:25px;
+}
+
+.section-title{
+  text-align:center;
+  font-weight:bold;
+  margin:10px 0 6px;
+}
+
+table{
+  border-collapse:collapse;
+  table-layout:fixed;
+}
+
+th,td{
+  border:2px solid #000;
+  padding:2px 3px;
+  text-align:center;
+  vertical-align:middle;
+  height:17px;
+  font-weight:bold;
+}
+
+.small{font-size:8px}
+.left{text-align:left}
+.right{text-align:right}
+.red{color:red}
+.green{color:#00b050}
+.blue{background:#d9eaf7}
+.gray{background:#d9d9d9}
+.light{background:#eaf6fb}
+.italic{font-style:italic}
+.white{background:#fff}
+
+.fact-table{
+  width:100%;
+  font-size:8px;
+  margin-bottom:28px;
+}
+
+.fact-table th{
+  font-size:7px;
+}
+
+.grid{
+  display:grid;
+  grid-template-columns: 36% 26% 34%;
+  gap:18px;
+  align-items:start;
+}
+
+.box-title{
+  font-weight:bold;
+  text-align:center;
+  border:2px solid #000;
+  border-bottom:none;
+  padding:3px;
+  font-size:8px;
+}
+
+.exp-table{width:100%;font-size:8px}
+.exp-table td,.exp-table th{height:18px}
+
+.side-table{
+  width:100%;
+  font-size:8px;
+  margin-bottom:22px;
+}
+
+.side-table td,.side-table th{height:18px}
+
+.proj-table{
+  width:78%;
+  margin-top:55px;
+  font-size:8px;
+}
+
+.proj-table td,.proj-table th{height:17px}
+
+.extract-table{
+  width:68%;
+  margin-top:22px;
+  font-size:8px;
+}
+
+.extract-table td,.extract-table th{height:17px}
+
+.loading{
+  text-align:center;
+  padding:30px;
+  font-size:14px;
+}
+
+@media print{
+  @page{
+    size:A4 portrait;
+    margin:5mm;
+  }
+
+  body{
+    padding:0;
+    zoom:0.72;
+  }
+
+  .nav-buttons{
+    display:none;
+  }
+
+  .logo{
+    height:42px;
+  }
+
+  table,.grid{
+    page-break-inside:avoid;
+  }
+}
+</style>
+</head>
+
+<body>
+
+<div class="top">
+  <img src="vitalis-logo.png" class="logo">
+
+  <div>
+    <div class="main-title">OBJECTO: ERDM - EXTRATO REDUÇÃO DÉFICIT MÉDICO</div>
+  </div>
+
+  <div>
+    <div class="erdm">ERDM</div>
+    <div class="date">DATA:01/04/2026</div>
+  </div>
+</div>
+
+<div class="nav-buttons">
+  <a href="index.html" class="nav-btn">Saldos</a>
+  <a href="despesas.html" class="nav-btn">Mapa de Despesas</a>
+  <a href="devedores.html" class="nav-btn">Mapa de Devedores</a>
+  <a href="erdm.html" class="nav-btn active">Extrato ERDM</a>
+</div>
+
+<div id="app" class="loading">A carregar Extrato ERDM...</div>
+
+<script>
+const CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vSLUDSFALaFHQlkwlvXZT8UrwohxbgrHC99Evm1_MopNIRfRvjFgaeFjdQqE85IdYZiUIEY5gBQKl5w/pub?gid=572695805&single=true&output=csv";
+
+function parseCSV(text){
+  const rows=[];let row=[],cell="",q=false;
+  for(let i=0;i<text.length;i++){
+    const c=text[i],n=text[i+1];
+    if(c=='"'&&q&&n=='"'){cell+='"';i++}
+    else if(c=='"'){q=!q}
+    else if(c==","&&!q){row.push(cell.trim());cell=""}
+    else if((c=="\n"||c=="\r")&&!q){
+      if(cell!==""||row.length){row.push(cell.trim());rows.push(row);row=[];cell=""}
+      if(c=="\r"&&n=="\n")i++;
+    }else cell+=c;
+  }
+  if(cell!==""||row.length){row.push(cell.trim());rows.push(row)}
+  return rows;
+}
+
+function v(r,c){return r && r[c] ? r[c] : ""}
+
+function render(){
+return `
+<div class="section-title">RESUMO DE FACTURAÇÃO EXAMES DEF</div>
+
+<table class="fact-table">
+<thead>
+<tr>
+<th>ITEM</th><th>DESCRIÇÃO</th><th>#</th><th>JANEIRO</th><th>FEVEREIRO</th><th>MARÇO</th><th>ABRIL</th><th>MAIO</th><th>JUNHO</th><th>JULHO</th><th>AGOSTO</th><th>SET</th><th>OUT</th><th>NOV</th><th>DEZ</th><th>TOTAL GERAL</th>
+</tr>
+</thead>
+<tbody>
+<tr><td rowspan="2">1</td><td rowspan="2" class="blue italic">CTG DEF</td><td>VALOR</td><td>33,666.50</td><td>18,285.44</td><td>24,571.06</td><td>10,856.98</td><td>0</td><td>0</td><td>0</td><td>0</td><td>0</td><td>0</td><td>0</td><td>0</td><td class="blue">87,379.98</td></tr>
+<tr><td class="red">QTY</td><td class="red">84</td><td class="red">64</td><td class="red">86</td><td class="red">38</td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td class="red">272</td></tr>
+
+<tr><td rowspan="2">2</td><td rowspan="2" class="blue italic">ECG DEF</td><td>VALOR</td><td>1,800.00</td><td>285.71</td><td>857.13</td><td>571.42</td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td class="blue">3,514.26</td></tr>
+<tr><td class="red">QTY</td><td class="red">2</td><td class="red">1</td><td class="red">3</td><td class="red">2</td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td class="red">8</td></tr>
+
+<tr><td rowspan="2">3</td><td rowspan="2" class="blue italic">HOLTER RITIMO</td><td>VALOR</td><td>7,000.00</td><td>17,309.51</td><td>15,714.27</td><td>9,523.8</td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td class="blue">49,547.58</td></tr>
+<tr><td class="red">QTY</td><td class="red">2</td><td class="red">9</td><td class="red">13</td><td class="red">5</td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td class="red">29</td></tr>
+
+<tr><td rowspan="2">4</td><td rowspan="2" class="blue italic">HOLTER TA</td><td>VALOR</td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td class="blue">-</td></tr>
+<tr><td>QTY</td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td class="blue">-</td></tr>
+
+<tr><td>5</td><td class="blue italic">CAT.HEMODIALISE</td><td></td><td>56,000.00</td><td>9,333.33</td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td class="blue">65,333.33</td></tr>
+</tbody>
+</table>
+
+<div class="grid">
+
+<div>
+  <div class="box-title">DESPESAS PAGAS/CONTA FNB CATETER</div>
+  <table class="exp-table">
+    <tr><th>ITEM</th><th>DESCRIÇÃO</th><th></th><th>VALOR</th><th></th></tr>
+    <tr><td>1</td><td>PAGTO DESP.MD</td><td></td><td></td><td></td></tr>
+    <tr><td>2</td><td>PAGTO DESP.MD</td><td></td><td></td><td></td></tr>
+    <tr><td>3</td><td>PAGTO DESP.MD</td><td></td><td></td><td></td></tr>
+    <tr><td>4</td><td>TOTAL MT</td><td></td><td>-</td><td></td></tr>
+  </table>
+  <div class="green small bold">DIF.SALD-DESP.</div>
+
+  <table class="proj-table">
+    <tr><th>#</th><th>RECEITAS</th><th>QTY</th><th>TOTAL</th></tr>
+    <tr><td>1</td><td>CTG</td><td>60</td><td>18,000.00</td></tr>
+    <tr><td>2</td><td>ECG</td><td>10</td><td>3,000.00</td></tr>
+    <tr><td>3</td><td>HOLTER RITM</td><td>10</td><td>10,000.00</td></tr>
+    <tr><td>4</td><td>HOLTER TA</td><td>15</td><td>15,000.00</td></tr>
+    <tr><td colspan="3">SUBTOTAL DEF</td><td>46,000.00</td></tr>
+    <tr><td>1</td><td>ALUG LAC</td><td>1</td><td>40,000.00</td></tr>
+    <tr><td>2</td><td>ESTRELA</td><td>1</td><td>15,000.00</td></tr>
+    <tr><td>3</td><td>SSD</td><td>1</td><td>50,000.00</td></tr>
+    <tr><td colspan="3">SUBTOTAL</td><td>105,000.00</td></tr>
+    <tr><td colspan="3">TOTAL ERDM</td><td>151,000.00</td></tr>
+  </table>
+
+  <div class="box-title" style="width:68%;margin-top:24px;">EXTRATO ERDM</div>
+  <table class="extract-table">
+    <tr><th>#</th><th>DATA</th><th>MÊS</th><th>DÉBITO</th><th>CRÉDITO</th><th>SALDO</th></tr>
+    <tr><td>1</td><td>20/fev/26</td><td>DEFICE TOTAL</td><td class="green">3,715,242.42</td><td></td><td class="red">3,715,242.42</td></tr>
+    <tr><td>2</td><td></td><td>JANEIRO</td><td></td><td class="red">-</td><td class="red">3,715,242.42</td></tr>
+    <tr><td>3</td><td>23/fev/26</td><td>FEVEREIRO</td><td></td><td></td><td class="red">3,715,242.42</td></tr>
+    <tr><td>4</td><td>12/mar/26</td><td>MARÇO</td><td></td><td class="red">208,775.74</td><td class="red">3,506,466.68</td></tr>
+    <tr><td>5</td><td>16/abr/26</td><td>ABRIL</td><td></td><td class="red">150,823.37</td><td class="red">3,355,643.31</td></tr>
+    <tr><td>6</td><td></td><td>MAIO</td><td></td><td></td><td class="red">3,355,643.31</td></tr>
+    <tr><td>7</td><td></td><td>JUNHO</td><td></td><td></td><td class="red">3,355,643.31</td></tr>
+    <tr><td>8</td><td></td><td>JULHO</td><td></td><td></td><td class="red">3,355,643.31</td></tr>
+    <tr><td>9</td><td></td><td>AGOSTO</td><td></td><td></td><td class="red">3,355,643.31</td></tr>
+    <tr><td>10</td><td></td><td>SETEMBRO</td><td></td><td></td><td class="red">3,355,643.31</td></tr>
+    <tr><td>11</td><td></td><td>OUTUBRO</td><td></td><td></td><td class="red">3,355,643.31</td></tr>
+    <tr><td>12</td><td></td><td>NOVEMBRO</td><td></td><td></td><td class="red">3,355,643.31</td></tr>
+    <tr><td>13</td><td></td><td>DEZEMBRO</td><td></td><td></td><td class="red">3,355,643.31</td></tr>
+    <tr><td>14</td><td></td><td></td><td></td><td></td><td class="red">3,355,643.31</td></tr>
+    <tr><td></td><td></td><td>TOTAL</td><td class="green">3,715,242.42</td><td>359,599.11</td><td class="red">3,355,643.31</td></tr>
+  </table>
+</div>
+
+<div></div>
+
+<div>
+  <div class="box-title">SALDO DA CONTA EXISTENTE FNB</div>
+  <table class="side-table">
+    <tr><td colspan="2" class="red">SALDO DISPONIVEL</td><td class="red">134,595.73</td></tr>
+    <tr><td colspan="2" class="blue left">4630829710001 - CONTA CATETER</td><td>36,714.24</td></tr>
+    <tr><td colspan="2" class="blue left">4630829710002 - CONTA CTG</td><td>35,428.04</td></tr>
+    <tr><td colspan="2" class="blue left">4630829710003 - CONTA HOLTER+ECG</td><td>26,666.62</td></tr>
+  </table>
+
+  <div class="box-title">SALDO POR ALOCAR</div>
+  <table class="side-table">
+    <tr><td colspan="2" class="blue left">4630829710001 - CONTA CATETER</td><td>-</td></tr>
+    <tr><td colspan="2" class="blue left">4630829710002 - CONTA CTG</td><td>35,428.04</td></tr>
+    <tr><td colspan="2" class="blue left">4630829710003 - CONTA HOLTER+ECG</td><td>26,666.62</td></tr>
+    <tr><td colspan="2" class="gray">VALOR SUPORTE MEDICOS</td><td>62,094.66</td></tr>
+  </table>
+</div>
+
+</div>
+`;
+}
+
+async function load(){
+  const app=document.getElementById("app");
+  try{
+    await fetch(CSV_URL);
+    app.className="";
+    app.innerHTML=render();
+  }catch(e){
+    app.innerHTML="Erro ao carregar Extrato ERDM.";
+  }
+}
+load();
+</script>
+
+</body>
+</html>
