@@ -1,0 +1,324 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>MAPA DE SALDOS - VITALIS</title>
+  <style>
+    :root{
+      --azul:#0B2F5B;
+      --azul2:#123E72;
+      --verde:#00A86B;
+      --cinza:#F4F7FA;
+      --linha:#D9E2EC;
+      --texto:#1F2937;
+      --vermelho:#B91C1C;
+    }
+
+    *{box-sizing:border-box}
+
+    body{
+      margin:0;
+      font-family:Arial, Helvetica, sans-serif;
+      background:var(--cinza);
+      color:var(--texto);
+    }
+
+    .page{
+      max-width:1200px;
+      margin:24px auto;
+      padding:18px;
+      background:#fff;
+      border-radius:16px;
+      box-shadow:0 10px 30px rgba(0,0,0,.08);
+    }
+
+    .topbar{
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      gap:16px;
+      padding:14px 18px;
+      background:linear-gradient(135deg,var(--azul),var(--azul2));
+      color:white;
+      border-radius:14px;
+      margin-bottom:18px;
+    }
+
+    .topbar h1{
+      margin:0;
+      font-size:22px;
+      letter-spacing:.3px;
+    }
+
+    .actions{
+      display:flex;
+      gap:10px;
+      flex-wrap:wrap;
+    }
+
+    button{
+      border:0;
+      padding:10px 14px;
+      border-radius:10px;
+      cursor:pointer;
+      font-weight:700;
+      color:white;
+      background:var(--verde);
+    }
+
+    button.secondary{background:#64748B}
+
+    .status{
+      font-size:13px;
+      color:#475569;
+      margin:6px 0 14px;
+    }
+
+    .table-wrap{
+      overflow-x:auto;
+      border:1px solid var(--linha);
+      border-radius:12px;
+    }
+
+    table{
+      width:100%;
+      border-collapse:collapse;
+      font-size:13px;
+    }
+
+    th{
+      background:var(--azul);
+      color:white;
+      padding:10px 8px;
+      text-align:center;
+      border:1px solid #ffffff33;
+      white-space:nowrap;
+    }
+
+    td{
+      padding:8px;
+      border:1px solid var(--linha);
+      text-align:right;
+      white-space:nowrap;
+    }
+
+    td:first-child, td:nth-child(2){
+      text-align:left;
+      font-weight:600;
+    }
+
+    tr:nth-child(even):not(.total-row){background:#F8FAFC}
+
+    .total-row{
+      background:#E8F4EF !important;
+      font-weight:800;
+      color:#063F2D;
+    }
+
+    .total-row td{
+      border-top:2px solid var(--verde);
+      border-bottom:2px solid var(--verde);
+    }
+
+    .negative{color:var(--vermelho);font-weight:700}
+
+    .error{
+      display:none;
+      margin:12px 0;
+      padding:12px;
+      background:#FEE2E2;
+      color:#7F1D1D;
+      border:1px solid #FCA5A5;
+      border-radius:10px;
+      font-weight:700;
+    }
+
+    @media print{
+      @page{size:A4 landscape;margin:7mm}
+      body{background:white}
+      .page{
+        margin:0;
+        max-width:none;
+        box-shadow:none;
+        border-radius:0;
+        padding:0;
+      }
+      .actions,.status,.error{display:none!important}
+      .topbar{
+        border-radius:0;
+        padding:8px 12px;
+        margin-bottom:8px;
+      }
+      .topbar h1{font-size:16px}
+      table{font-size:9px}
+      th,td{padding:4px}
+      .table-wrap{overflow:visible;border:0}
+    }
+  </style>
+</head>
+
+<body>
+  <main class="page">
+    <div class="topbar">
+      <h1>MAPA DE SALDOS - VITALIS</h1>
+      <div class="actions">
+        <button onclick="window.print()">Imprimir / Guardar PDF</button>
+        <button class="secondary" onclick="carregarDados()">Actualizar</button>
+      </div>
+    </div>
+
+    <div id="status" class="status">A carregar dados...</div>
+    <div id="erro" class="error"></div>
+
+    <div class="table-wrap">
+      <table id="tabela">
+        <thead id="thead"></thead>
+        <tbody id="tbody"></tbody>
+      </table>
+    </div>
+  </main>
+
+  <script>
+    const CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vQUaHKZNpClWM4hFM-RV9A1cDbrS_e4gBSqrrKMErc0DF5ChKce-T_1DU7RiWxw6yb2CmoNisA24Ua0/pub?gid=0&single=true&output=csv";
+
+    function parseCSV(texto){
+      const linhas = [];
+      let linha = [];
+      let valor = "";
+      let dentroAspas = false;
+
+      for(let i=0;i<texto.length;i++){
+        const c = texto[i];
+        const n = texto[i+1];
+
+        if(c === '"' && dentroAspas && n === '"'){
+          valor += '"';
+          i++;
+        }else if(c === '"'){
+          dentroAspas = !dentroAspas;
+        }else if(c === ',' && !dentroAspas){
+          linha.push(valor.trim());
+          valor = "";
+        }else if((c === '\n' || c === '\r') && !dentroAspas){
+          if(valor || linha.length){
+            linha.push(valor.trim());
+            linhas.push(linha);
+            linha = [];
+            valor = "";
+          }
+          if(c === '\r' && n === '\n') i++;
+        }else{
+          valor += c;
+        }
+      }
+
+      if(valor || linha.length){
+        linha.push(valor.trim());
+        linhas.push(linha);
+      }
+
+      return linhas.filter(l => l.some(c => c !== ""));
+    }
+
+    function numeroBR(v){
+      if(v === null || v === undefined) return "";
+      const txt = String(v).replace(/\s/g,"").replace(/[^\d,.-]/g,"");
+      if(!txt) return "";
+      let n;
+      if(txt.includes(",") && txt.includes(".")){
+        n = Number(txt.replace(/\./g,"").replace(",","."));
+      }else if(txt.includes(",")){
+        n = Number(txt.replace(",","."));
+      }else{
+        n = Number(txt);
+      }
+      return Number.isFinite(n) ? n : "";
+    }
+
+    function formatar(v){
+      const n = numeroBR(v);
+      if(n === "") return v || "";
+      return n.toLocaleString("pt-MZ", {
+        minimumFractionDigits:2,
+        maximumFractionDigits:2
+      });
+    }
+
+    function ehTotal(linha){
+      return linha.some(c => {
+        const t = String(c || "").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g,"");
+        return t.includes("total") ||
+               t.includes("nivel banco final") ||
+               t.includes("mzn-moza") ||
+               t.includes("saldo da empresa");
+      });
+    }
+
+    function renderizar(linhas){
+      const thead = document.getElementById("thead");
+      const tbody = document.getElementById("tbody");
+      thead.innerHTML = "";
+      tbody.innerHTML = "";
+
+      if(!linhas.length) throw new Error("A folha não devolveu dados.");
+
+      const cabecalho = linhas[0];
+      const trHead = document.createElement("tr");
+
+      cabecalho.forEach(c => {
+        const th = document.createElement("th");
+        th.textContent = c || "";
+        trHead.appendChild(th);
+      });
+
+      thead.appendChild(trHead);
+
+      linhas.slice(1).forEach(linha => {
+        const tr = document.createElement("tr");
+        if(ehTotal(linha)) tr.classList.add("total-row");
+
+        cabecalho.forEach((_, i) => {
+          const td = document.createElement("td");
+          const valor = linha[i] || "";
+          const n = numeroBR(valor);
+
+          td.textContent = n === "" ? valor : formatar(valor);
+          if(n !== "" && n < 0) td.classList.add("negative");
+
+          tr.appendChild(td);
+        });
+
+        tbody.appendChild(tr);
+      });
+    }
+
+    async function carregarDados(){
+      const status = document.getElementById("status");
+      const erro = document.getElementById("erro");
+
+      erro.style.display = "none";
+      erro.textContent = "";
+      status.textContent = "A carregar dados...";
+
+      try{
+        const resposta = await fetch(CSV_URL + "&cache=" + Date.now(), {cache:"no-store"});
+        if(!resposta.ok) throw new Error("Não foi possível ligar ao Google Sheets.");
+
+        const texto = await resposta.text();
+        const linhas = parseCSV(texto);
+
+        renderizar(linhas);
+        status.textContent = "Actualizado em: " + new Date().toLocaleString("pt-MZ");
+      }catch(e){
+        erro.textContent = "Erro: " + e.message;
+        erro.style.display = "block";
+        status.textContent = "Falha no carregamento dos dados.";
+      }
+    }
+
+    carregarDados();
+    setInterval(carregarDados, 60000);
+  </script>
+</body>
+</html>
