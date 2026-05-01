@@ -4,161 +4,192 @@
 <meta charset="UTF-8">
 <title>Mapa de Despesas</title>
 
+<script>
+(function protegerPagina(){
+  const auth = sessionStorage.getItem("painel_board_auth");
+  const loginTime = Number(sessionStorage.getItem("painel_board_login_time"));
+  const agora = Date.now();
+  const LIMITE_TEMPO = 60 * 60 * 1000;
+
+  if(auth !== "ok" || !loginTime || (agora - loginTime) > LIMITE_TEMPO){
+    sessionStorage.clear();
+    window.location.href = "login.html";
+  }
+})();
+</script>
+
 <style>
-* {
-  margin: 0;
-  padding: 0;
-  box-sizing: border-box;
+*{margin:0;padding:0;box-sizing:border-box}
+
+body{
+  font-family:Arial,Helvetica,sans-serif;
+  background:#fff;
+  color:#000;
+  padding:4px;
 }
 
-body {
-  font-family: Arial, Helvetica, sans-serif;
-  background: #fff;
-  color: #000;
-  padding: 4px;
+.logo{
+  height:62px;
+  margin-bottom:4px;
 }
 
-.logo {
-  height: 62px;
-  margin-bottom: 4px;
+.nav-buttons{
+  position:absolute;
+  top:13px;
+  left:540px;
+  display:flex;
+  gap:65px;
 }
 
-.nav-buttons {
-  position: absolute;
-  top: 13px;
-  left: 540px;
-  display: flex;
-  gap: 65px;
-}
-
-.nav-btn {
-  min-width: 130px;
-  height: 28px;
-  padding: 6px 14px;
-  border: 2px solid #e5392d;
-  border-radius: 6px;
-  background: #fff;
-  color: #000;
-  text-decoration: none;
-  font-size: 11px;
-  font-weight: bold;
-  text-align: center;
+.nav-btn{
+  min-width:130px;
+  height:28px;
+  padding:6px 14px;
+  border:2px solid #e5392d;
+  border-radius:6px;
+  background:#fff;
+  color:#000;
+  text-decoration:none;
+  font-size:11px;
+  font-weight:bold;
+  text-align:center;
 }
 
 .nav-btn:hover,
-.nav-btn.active {
-  background: #e5392d;
-  color: #fff;
+.nav-btn.active{
+  background:#e5392d;
+  color:#fff;
 }
 
-.title {
-  border: 2px solid #000;
-  text-align: center;
-  font-weight: bold;
-  font-size: 16px;
-  padding: 3px;
-  margin-bottom: 24px;
+.logout-btn{
+  position:absolute;
+  top:13px;
+  right:20px;
+  padding:7px 14px;
+  border:none;
+  border-radius:6px;
+  background:#333;
+  color:#fff;
+  font-weight:bold;
+  cursor:pointer;
 }
 
-table {
-  width: 100%;
-  border-collapse: collapse;
-  table-layout: fixed;
-  font-size: 16px;
+.title{
+  border:2px solid #000;
+  text-align:center;
+  font-weight:bold;
+  font-size:16px;
+  padding:3px;
+  margin-bottom:24px;
 }
 
-th, td {
-  border: 1px solid #000;
-  padding: 3px 4px;
-  vertical-align: middle;
+table{
+  width:100%;
+  border-collapse:collapse;
+  table-layout:fixed;
+  font-size:16px;
 }
 
-th {
-  background: #d9d9d9;
-  font-weight: bold;
-  text-align: center;
+th,td{
+  border:1px solid #000;
+  padding:3px 4px;
+  vertical-align:middle;
 }
 
-td {
-  height: 24px;
+th{
+  background:#d9d9d9;
+  font-weight:bold;
+  text-align:center;
 }
 
-.col-item { width: 6%; text-align: center; }
-.col-desc { width: 36%; }
-.col-resp { width: 19%; text-align: center; }
-.col-ent { width: 12%; text-align: center; }
-.col-lim { width: 13.5%; text-align: center; }
-.col-valor { width: 15.5%; text-align: right; }
-
-.section-row td {
-  background: #92d050;
-  font-weight: bold;
-  text-align: center;
+td{
+  height:24px;
 }
 
-.subtotal-row td {
-  background: #d9d9d9;
-  font-weight: bold;
+.col-item{width:6%;text-align:center}
+.col-desc{width:36%}
+.col-resp{width:19%;text-align:center}
+.col-ent{width:12%;text-align:center}
+.col-lim{width:13.5%;text-align:center}
+.col-valor{width:15.5%;text-align:right}
+
+.section-row td{
+  background:#92d050;
+  font-weight:bold;
+  text-align:center;
 }
 
-.subtotal-label {
-  text-align: center;
+.subtotal-row td{
+  background:#d9d9d9;
+  font-weight:bold;
 }
 
-.total-row td {
-  background: #d9d9d9;
-  font-weight: bold;
+.subtotal-label{
+  text-align:center;
 }
 
-.total-label {
-  text-align: center;
+.total-row td{
+  background:#d9d9d9;
+  font-weight:bold;
 }
 
-.total-value {
-  font-size: 22px;
-  font-weight: bold;
-  text-align: right;
+.total-label{
+  text-align:center;
 }
 
-.valor {
-  text-align: right;
+.total-value{
+  font-size:22px;
+  font-weight:bold;
+  text-align:right;
 }
 
-.center {
-  text-align: center;
+.valor{
+  text-align:right;
 }
 
-.desc-small {
-  font-size: 10px;
+.center{
+  text-align:center;
 }
 
-.loading {
-  text-align: center;
-  font-size: 16px;
-  padding: 30px;
+.desc-small{
+  font-size:10px;
 }
 
-@media print {
-  @page {
-    size: A4 portrait;
-    margin: 5mm;
+.loading{
+  text-align:center;
+  font-size:16px;
+  padding:30px;
+}
+
+.error{
+  color:#c00000;
+  text-align:center;
+  font-weight:bold;
+  padding:30px;
+}
+
+@media print{
+  @page{
+    size:A4 portrait;
+    margin:5mm;
   }
 
-  body {
-    padding: 0;
-    zoom: 0.82;
+  body{
+    padding:0;
+    zoom:0.82;
   }
 
-  .nav-buttons {
-    display: none;
+  .nav-buttons,
+  .logout-btn{
+    display:none;
   }
 
-  .logo {
-    height: 55px;
+  .logo{
+    height:55px;
   }
 
-  table {
-    page-break-inside: avoid;
+  table{
+    page-break-inside:avoid;
   }
 }
 </style>
@@ -175,46 +206,52 @@ td {
   <a href="erdm.html" class="nav-btn">Extrato ERDM</a>
 </div>
 
+<button onclick="logout()" class="logout-btn">Sair</button>
+
 <div class="title">Relação de Despesas Pendentes</div>
 
 <div id="app" class="loading">A carregar despesas...</div>
 
 <script>
+function logout(){
+  sessionStorage.clear();
+  window.location.href = "login.html";
+}
 
 const CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vSLUDSFALaFHQlkwlvXZT8UrwohxbgrHC99Evm1_MopNIRfRvjFgaeFjdQqE85IdYZiUIEY5gBQKl5w/pub?gid=263297811&single=true&output=csv";
 
-function parseCSV(text) {
-  const rows = [];
-  let row = [];
-  let cell = "";
-  let insideQuotes = false;
+function parseCSV(text){
+  const rows=[];
+  let row=[];
+  let cell="";
+  let insideQuotes=false;
 
-  for (let i = 0; i < text.length; i++) {
-    const char = text[i];
-    const next = text[i + 1];
+  for(let i=0;i<text.length;i++){
+    const char=text[i];
+    const next=text[i+1];
 
-    if (char === '"' && insideQuotes && next === '"') {
-      cell += '"';
+    if(char === '"' && insideQuotes && next === '"'){
+      cell+='"';
       i++;
-    } else if (char === '"') {
-      insideQuotes = !insideQuotes;
-    } else if (char === "," && !insideQuotes) {
+    }else if(char === '"'){
+      insideQuotes=!insideQuotes;
+    }else if(char === "," && !insideQuotes){
       row.push(cell.trim());
-      cell = "";
-    } else if ((char === "\n" || char === "\r") && !insideQuotes) {
-      if (cell !== "" || row.length > 0) {
+      cell="";
+    }else if((char === "\n" || char === "\r") && !insideQuotes){
+      if(cell !== "" || row.length > 0){
         row.push(cell.trim());
         rows.push(row);
-        row = [];
-        cell = "";
+        row=[];
+        cell="";
       }
-      if (char === "\r" && next === "\n") i++;
-    } else {
-      cell += char;
+      if(char === "\r" && next === "\n") i++;
+    }else{
+      cell+=char;
     }
   }
 
-  if (cell !== "" || row.length > 0) {
+  if(cell !== "" || row.length > 0){
     row.push(cell.trim());
     rows.push(row);
   }
@@ -222,33 +259,41 @@ function parseCSV(text) {
   return rows;
 }
 
-function isSection(row) {
-  const txt = row.join(" ").toUpperCase();
+function clean(v){
+  return v ? String(v).trim() : "";
+}
+
+function norm(v){
+  return clean(v)
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g,"")
+    .toUpperCase();
+}
+
+function isSection(row){
+  const txt=norm(row.join(" "));
   return (
     txt.includes("DESPESAS PRIORITARIAS") ||
-    txt.includes("DESPESAS PRIORITÁRIAS") ||
     txt.includes("PAGAMENTO DE MEDICOS") ||
-    txt.includes("PAGAMENTO DE MÉDICOS") ||
     txt.includes("CONVERSAO DE FERIAS") ||
-    txt.includes("CONVERSÃO DE FÉRIAS") ||
     txt.includes("DESPESAS CORRENTES")
   );
 }
 
-function isSubtotal(row) {
-  return row.join(" ").toUpperCase().includes("SUB-TOTAL");
+function isSubtotal(row){
+  return norm(row.join(" ")).includes("SUB-TOTAL");
 }
 
-function isTotal(row) {
-  return row.join(" ").toUpperCase().includes("TOTAL GERAL");
+function isTotal(row){
+  return norm(row.join(" ")).includes("TOTAL GERAL");
 }
 
-function clean(v) {
-  return v || "";
+function firstFilled(row){
+  return row.find(c => clean(c) !== "") || "";
 }
 
-function renderTable(rows) {
-  let html = `
+function renderTable(rows){
+  let html=`
   <table>
     <colgroup>
       <col class="col-item">
@@ -271,31 +316,26 @@ function renderTable(rows) {
     <tbody>
   `;
 
-  for (const r of rows) {
-    if (!r || r.every(c => !c)) continue;
+  for(const r of rows){
+    if(!r || r.every(c => !clean(c))) continue;
 
-    const joined = r.join(" ").toUpperCase();
+    const joined=norm(r.join(" "));
 
-    if (
-      joined.includes("ITEM") &&
-      joined.includes("DESCRICAO") &&
-      joined.includes("VALOR")
-    ) continue;
+    if(joined.includes("ITEM") && joined.includes("DESCRICAO") && joined.includes("VALOR")) continue;
+    if(joined.includes("RELACAO DE DESPESAS")) continue;
 
-    if (joined.includes("RELAÇÃO DE DESPESAS")) continue;
-
-    if (isSection(r)) {
-      html += `
+    if(isSection(r)){
+      html+=`
       <tr class="section-row">
         <td></td>
-        <td colspan="5">${clean(r.find(c => c && c.trim() !== ""))}</td>
+        <td colspan="5">${firstFilled(r)}</td>
       </tr>`;
       continue;
     }
 
-    if (isSubtotal(r)) {
-      const valor = r[r.length - 1] || "";
-      html += `
+    if(isSubtotal(r)){
+      const valor = clean(r[r.length - 1]);
+      html+=`
       <tr class="subtotal-row">
         <td colspan="5" class="subtotal-label">SUB-TOTAL</td>
         <td class="valor">${valor}</td>
@@ -303,9 +343,9 @@ function renderTable(rows) {
       continue;
     }
 
-    if (isTotal(r)) {
-      const valor = r[r.length - 1] || "";
-      html += `
+    if(isTotal(r)){
+      const valor = clean(r[r.length - 1]);
+      html+=`
       <tr class="total-row">
         <td colspan="5" class="total-label">TOTAL GERAL</td>
         <td class="total-value">${valor}</td>
@@ -313,14 +353,14 @@ function renderTable(rows) {
       continue;
     }
 
-    const item = clean(r[0]);
-    const desc = clean(r[1]);
-    const resp = clean(r[2]);
-    const entrada = clean(r[3]);
-    const limite = clean(r[4]);
-    const valor = clean(r[5]);
+    const item=clean(r[0]);
+    const desc=clean(r[1]);
+    const resp=clean(r[2]);
+    const entrada=clean(r[3]);
+    const limite=clean(r[4]);
+    const valor=clean(r[5]);
 
-    html += `
+    html+=`
     <tr>
       <td class="center">${item}</td>
       <td class="${desc.length > 35 ? 'desc-small' : ''}">${desc}</td>
@@ -331,29 +371,38 @@ function renderTable(rows) {
     </tr>`;
   }
 
-  html += `
+  html+=`
     </tbody>
   </table>`;
 
   return html;
 }
 
-async function carregarDespesas() {
-  const app = document.getElementById("app");
+async function carregarDespesas(){
+  const app=document.getElementById("app");
 
-  try {
-    const resp = await fetch(CSV_URL);
-    if (!resp.ok) throw new Error("Erro ao carregar Google Sheets");
+  try{
+    const resp=await fetch(CSV_URL + "&t=" + Date.now(), {
+      cache:"no-store"
+    });
 
-    const text = await resp.text();
-    const rows = parseCSV(text);
+    if(!resp.ok) throw new Error("Erro HTTP: " + resp.status);
 
-    app.className = "";
-    app.innerHTML = renderTable(rows);
+    const text=await resp.text();
 
-  } catch (e) {
-    app.innerHTML = "Erro ao carregar despesas. Verifique se o Google Sheet está publicado.";
-    console.error(e);
+    if(!text || text.length < 10){
+      throw new Error("CSV vazio");
+    }
+
+    const rows=parseCSV(text);
+
+    app.className="";
+    app.innerHTML=renderTable(rows);
+
+  }catch(e){
+    console.error("ERRO REAL:", e);
+    app.className="error";
+    app.innerHTML="Erro ao carregar despesas. Verifique se o Google Sheet está publicado.";
   }
 }
 
