@@ -3,142 +3,41 @@
 <head>
 <meta charset="UTF-8">
 <title>Mapa de Devedores</title>
-
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
+body{font-family:Arial,Helvetica,sans-serif;background:#fff;color:#000;padding:8px;font-size:12px}
+.logo{height:55px}
+.nav-buttons{position:absolute;top:13px;left:540px;display:flex;gap:65px}
+.nav-btn{min-width:130px;height:28px;padding:6px 14px;border:2px solid #e5392d;border-radius:6px;background:#fff;color:#000;text-decoration:none;font-size:11px;font-weight:bold;text-align:center}
+.nav-btn:hover,.nav-btn.active{background:#e5392d;color:#fff}
 
-body{
-  font-family:Arial, Helvetica, sans-serif;
-  background:#fff;
-  color:#000;
-  padding:8px 10px;
-  font-size:12px;
-}
+.title{text-align:center;font-size:18px;font-weight:bold;margin-top:-10px}
+.data{text-align:center;font-size:13px;font-weight:bold;margin:4px 0 10px}
 
-.logo{
-  height:55px;
-}
-
-.nav-buttons{
-  position:absolute;
-  top:13px;
-  left:540px;
-  display:flex;
-  gap:65px;
-}
-
-.nav-btn{
-  min-width:130px;
-  height:28px;
-  padding:6px 14px;
-  border:2px solid #e5392d;
-  border-radius:6px;
-  background:#fff;
-  color:#000;
-  text-decoration:none;
-  font-size:11px;
-  font-weight:bold;
-  text-align:center;
-}
-
-.nav-btn:hover,.nav-btn.active{
-  background:#e5392d;
-  color:#fff;
-}
-
-.title{
-  text-align:center;
-  font-size:18px;
-  font-weight:bold;
-  margin-top:-12px;
-}
-
-.data{
-  text-align:center;
-  font-size:12px;
-  font-weight:bold;
-  margin:4px 0 10px;
-}
-
-table{
-  width:100%;
-  border-collapse:collapse;
-  table-layout:fixed;
-}
-
-th,td{
-  border:1px solid #000;
-  padding:2px 3px;
-  height:21px;
-  text-align:center;
-  vertical-align:middle;
-  white-space:nowrap;
-}
-
-th{
-  font-weight:bold;
-}
-
+table{border-collapse:collapse;table-layout:fixed}
+.main-table{width:100%}
+th,td{border:1px solid #000;padding:2px 3px;height:20px;text-align:center;vertical-align:middle;white-space:nowrap}
+th{font-weight:bold}
 .left{text-align:left}
 .bold{font-weight:bold}
 .italic{font-style:italic}
 .green{color:#00b050}
 .red{color:#c00000}
 
-.group-row td,
-.subtotal-row td,
-.total-row td{
-  font-weight:bold;
-  border-top:2px solid #000;
-  border-bottom:2px solid #000;
-}
+.group td,.subtotal td,.total td{font-weight:bold;border-top:2px solid #000;border-bottom:2px solid #000}
+.group td:nth-child(2){font-style:italic;text-align:left}
 
-.group-row td:nth-child(2){
-  font-style:italic;
-  text-align:left;
-}
+.summary{width:390px;margin-top:16px;font-size:14px}
+.summary td{border:none;border-bottom:2px solid #000;text-align:left;height:20px}
 
-.summary{
-  width:380px;
-  margin-top:16px;
-  font-size:14px;
-}
-
-.summary td{
-  border:none;
-  border-bottom:2px solid #000;
-  text-align:left;
-  height:20px;
-}
-
-.loading{
-  text-align:center;
-  padding:30px;
-  font-size:15px;
-}
+.loading{text-align:center;padding:30px;font-size:15px}
 
 @media print{
-  @page{
-    size:A4 landscape;
-    margin:4mm;
-  }
-
-  body{
-    padding:0;
-    zoom:0.72;
-  }
-
-  .nav-buttons{
-    display:none;
-  }
-
-  .logo{
-    height:42px;
-  }
-
-  table{
-    page-break-inside:avoid;
-  }
+  @page{size:A4 landscape;margin:4mm}
+  body{padding:0;zoom:0.72}
+  .nav-buttons{display:none}
+  .logo{height:42px}
+  table{page-break-inside:avoid}
 }
 </style>
 </head>
@@ -178,118 +77,99 @@ function parseCSV(text){
   return rows;
 }
 
-function clean(v){return v ? v.trim() : ""}
+function c(v){return v ? v.trim() : ""}
+function rowText(r){return r.join(" ").toUpperCase()}
 
-function findData(rows){
+function getDate(rows){
   for(const r of rows){
-    const txt=r.join(" ").toUpperCase();
-    if(txt.includes("DATA")){
-      const found=r.find(c=>/\d{1,2}\/\d{1,2}\/\d{4}/.test(c));
-      if(found) return "DATA: " + found;
-      const joined=r.join(" ");
-      const m=joined.match(/DATA[:\s]*([0-9]{1,2}\/[0-9]{1,2}\/[0-9]{4})/i);
-      if(m) return "DATA: " + m[1];
-    }
+    const txt=r.join(" ");
+    const m=txt.match(/DATA[:\s]*([0-9]{1,2}\/[0-9]{1,2}\/[0-9]{4})/i);
+    if(m) return "DATA: " + m[1];
   }
   return "";
 }
 
-function colorClass(value){
-  if(!value) return "";
-  if(value.trim()==="-") return "";
-  const n=parseFloat(value.replace(/\./g,"").replace(",","."));
+function clsValue(v){
+  if(!v || v==="-" ) return "";
+  const n=parseFloat(v.replace(/,/g,""));
   if(isNaN(n)) return "";
-  if(n >= 300000) return "green";
-  if(n > 0 && n < 20000) return "red";
+  if(n>=300000) return "green";
+  if(n>0 && n<20000) return "red";
   return "";
 }
 
 function render(rows){
   let html=`
-  <table>
-    <colgroup>
-      <col style="width:5%">
-      <col style="width:15%">
-      <col style="width:8%">
-      <col style="width:9%">
-      <col style="width:9%">
-      <col style="width:9%">
-      <col style="width:9%">
-      <col style="width:8%">
-      <col style="width:9%">
-      <col style="width:11%">
-      <col style="width:10%">
-    </colgroup>
-    <thead>
-      <tr>
-        <th>ITEM</th>
-        <th>PERIODO</th>
-        <th>60 Dias</th>
-        <th>25-04-2026</th>
-        <th>Piso</th>
-        <th>25-05-2026</th>
-        <th>PISO</th>
-        <th>CORRENTE</th>
-        <th>50% piso Abril</th>
-        <th>TOTAL EM DÍVIDA</th>
-        <th>TOTAL EM COBRANÇA</th>
-      </tr>
-      <tr>
-        <th></th>
-        <th>CLIENTE</th>
-        <th>JANEIRO</th>
-        <th>FEVEREIRO</th>
-        <th></th>
-        <th>MARÇO</th>
-        <th></th>
-        <th>ABRIL</th>
-        <th>MAIO</th>
-        <th></th>
-        <th></th>
-      </tr>
-    </thead>
-    <tbody>
-  `;
+<table class="main-table">
+<colgroup>
+  <col style="width:5%">
+  <col style="width:13%">
+  <col style="width:8%">
+  <col style="width:8.5%">
+  <col style="width:8%">
+  <col style="width:9.5%">
+  <col style="width:8%">
+  <col style="width:8.8%">
+  <col style="width:8.8%">
+  <col style="width:11%">
+  <col style="width:11%">
+</colgroup>
+<thead>
+<tr>
+  <th>ITEM</th>
+  <th>PERIODO</th>
+  <th>60 Dias</th>
+  <th>25-04-2026</th>
+  <th>Piso</th>
+  <th>25-05-2026</th>
+  <th>PISO</th>
+  <th>CORRENTE</th>
+  <th></th>
+  <th rowspan="2">TOTAL EM DÍVIDA</th>
+  <th rowspan="2">TOTAL EM COBRANÇA</th>
+</tr>
+<tr>
+  <th></th>
+  <th>CLIENTE</th>
+  <th>JANEIRO</th>
+  <th>FEVEREIRO</th>
+  <th></th>
+  <th>MARÇO</th>
+  <th></th>
+  <th>ABRIL</th>
+  <th>50% piso Abril<br>MAIO</th>
+</tr>
+</thead>
+<tbody>`;
 
   for(const r of rows){
-    if(!r || r.every(c=>!c)) continue;
-
-    const txt=r.join(" ").toUpperCase();
-
+    const txt=rowText(r);
+    if(!r || r.every(x=>!x)) continue;
     if(txt.includes("MAPA DE DEVEDORES")) continue;
     if(txt.includes("DATA:")) continue;
     if(txt.includes("ITEM") && txt.includes("PERIODO")) continue;
     if(txt.includes("CLIENTE") && txt.includes("JANEIRO")) continue;
-    if(txt.includes("TOTAL EM DÍVIDA") && r.length < 5) continue;
+    if(txt.includes("TOTAL EM DÍVIDA") && r.length<6) continue;
     if(txt.includes("TOTAL PIO")) continue;
     if(txt.includes("TOTAL VALOR EM COBRANÇA")) continue;
     if(txt.includes("TOTAL PISO EM COBRANÇA")) continue;
 
-    const row=[
-      clean(r[0]), clean(r[1]), clean(r[2]), clean(r[3]), clean(r[4]),
-      clean(r[5]), clean(r[6]), clean(r[7]), clean(r[8]), clean(r[9]), clean(r[10])
-    ];
+    const row=[c(r[0]),c(r[1]),c(r[2]),c(r[3]),c(r[4]),c(r[5]),c(r[6]),c(r[7]),c(r[8]),c(r[9]),c(r[10])];
 
-    const isGroup=txt.includes("SEGURADORAS") || txt.includes("EMPRESAS PRIVADAS") || txt.includes("EMPRESAS PÚBLICAS") || txt.includes("EMPRESAS PUBLICAS");
+    const isGroup=txt.includes("SEGURADORAS")||txt.includes("EMPRESAS PRIVADAS")||txt.includes("EMPRESAS PÚBLICAS")||txt.includes("EMPRESAS PUBLICAS");
     const isSubtotal=txt.includes("SUBTOTAL");
-    const isTotal=txt.startsWith("TOTAL") || row[1].toUpperCase()==="TOTAL";
-
-    let trClass="";
-    if(isGroup) trClass="group-row";
-    if(isSubtotal) trClass="subtotal-row";
-    if(isTotal) trClass="total-row";
+    const isTotal=row[1].toUpperCase()==="TOTAL"||txt.startsWith("TOTAL ");
+    const trClass=isGroup?"group":isSubtotal?"subtotal":isTotal?"total":"";
 
     html+=`<tr class="${trClass}">`;
-
     row.forEach((val,i)=>{
-      let cls="";
-      if(i===1) cls+=" left";
-      if(isGroup || isSubtotal || isTotal) cls+=" bold";
-      if(isGroup && i===1) cls+=" italic";
-      cls+=" " + colorClass(val);
-      html+=`<td class="${cls}">${val}</td>`;
+      let cl="";
+      if(i===1) cl+=" left";
+      if(isGroup||isSubtotal||isTotal) cl+=" bold";
+      if(isGroup&&i===1) cl+=" italic";
+      cl+=" "+clsValue(val);
+      html+=`<td class="${cl}">${val}</td>`;
     });
-
     html+=`</tr>`;
   }
 
@@ -297,25 +177,23 @@ function render(rows){
   return html;
 }
 
-function renderSummary(rows){
-  let divida="", piso="", cobranca="", pisoCobranca="";
-
+function summary(rows){
+  let divida="",pio="",cobranca="",pisoCob="";
   for(const r of rows){
-    const txt=r.join(" ").toUpperCase();
-    const nums=r.filter(c=>/[0-9]/.test(c));
-    if(txt.includes("TOTAL EM DÍVIDA") && nums.length) divida=nums[nums.length-1];
-    if(txt.includes("TOTAL PIO") && nums.length) piso=nums[nums.length-1];
-    if(txt.includes("TOTAL VALOR EM COBRANÇA") && nums.length) cobranca=nums[nums.length-1];
-    if(txt.includes("TOTAL PISO EM COBRANÇA") && nums.length) pisoCobranca=nums[nums.length-1];
+    const txt=rowText(r);
+    const nums=r.filter(x=>/[0-9]/.test(x));
+    if(txt.includes("TOTAL EM DÍVIDA")) divida=nums[nums.length-1]||"";
+    if(txt.includes("TOTAL PIO")) pio=nums[nums.length-1]||"";
+    if(txt.includes("TOTAL VALOR EM COBRANÇA")) cobranca=nums[nums.length-1]||"";
+    if(txt.includes("TOTAL PISO EM COBRANÇA")) pisoCob=nums[nums.length-1]||"";
   }
-
   return `
-  <table class="summary">
-    <tr><td><b>TOTAL</b></td><td>EM DÍVIDA</td><td>${divida}</td></tr>
-    <tr><td><b>TOTAL PIO</b></td><td></td><td>${piso}</td></tr>
-    <tr><td><b>TOTAL</b></td><td>VALOR EM COBRANÇA</td><td>${cobranca}</td></tr>
-    <tr><td><b>TOTAL PISO</b></td><td>EM COBRANÇA</td><td>${pisoCobranca}</td></tr>
-  </table>`;
+<table class="summary">
+<tr><td><b>TOTAL</b></td><td>EM DÍVIDA</td><td>${divida}</td></tr>
+<tr><td><b>TOTAL PIO</b></td><td></td><td>${pio}</td></tr>
+<tr><td><b>TOTAL</b></td><td>VALOR EM COBRANÇA</td><td>${cobranca}</td></tr>
+<tr><td><b>TOTAL PISO</b></td><td>EM COBRANÇA</td><td>${pisoCob}</td></tr>
+</table>`;
 }
 
 async function carregar(){
@@ -324,18 +202,14 @@ async function carregar(){
     const resp=await fetch(CSV_URL);
     const text=await resp.text();
     const rows=parseCSV(text);
-
-    document.getElementById("dataMapa").innerText=findData(rows);
-
+    document.getElementById("dataMapa").innerText=getDate(rows);
     app.className="";
-    app.innerHTML=render(rows)+renderSummary(rows);
-
+    app.innerHTML=render(rows)+summary(rows);
   }catch(e){
     app.innerHTML="Erro ao carregar mapa de devedores.";
     console.error(e);
   }
 }
-
 carregar();
 </script>
 
