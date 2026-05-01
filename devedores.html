@@ -85,8 +85,7 @@ th{font-weight:bold}
 .red{color:#c00000}
 
 .group td,
-.subtotal td,
-.total td{
+.subtotal td{
   font-weight:bold;
   border-top:2px solid #000;
   border-bottom:2px solid #000;
@@ -247,7 +246,8 @@ function isUsefulRow(r){
   if(t.includes("DATA:")) return false;
   if(t.includes("ITEM") && t.includes("PERIODO")) return false;
   if(t.includes("CLIENTE") && t.includes("JANEIRO")) return false;
-  if(t.includes("TOTAL EM DÍVIDA") && r.length<8) return false;
+
+  if(t.includes("TOTAL EM DÍVIDA")) return false;
   if(t.includes("TOTAL PIO")) return false;
   if(t.includes("TOTAL VALOR EM COBRANÇA")) return false;
   if(t.includes("TOTAL PISO EM COBRANÇA")) return false;
@@ -331,19 +331,17 @@ function render(rows){
       t.includes("EMPRESAS PUBLICAS");
 
     const isSubtotal=t.includes("SUBTOTAL");
-    const isTotal=row[1].toUpperCase()==="TOTAL" || t.startsWith("TOTAL ");
 
     let trClass="";
     if(isGroup) trClass="group";
     else if(isSubtotal) trClass="subtotal";
-    else if(isTotal) trClass="total";
 
     html+=`<tr class="${trClass}">`;
 
     row.forEach((val,i)=>{
       let cl="";
       if(i===1) cl+=" left";
-      if(isGroup || isSubtotal || isTotal) cl+=" bold";
+      if(isGroup || isSubtotal) cl+=" bold";
       if(isGroup && i===1) cl+=" italic";
       cl+=" " + clsValue(val);
 
