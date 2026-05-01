@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+<meta charset="UTF-8">
+<title>Painel de Board - Acesso</title>
+
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+
+body{
+  font-family:Arial, Helvetica, sans-serif;
+  background:#eef1f5;
+  height:100vh;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+}
+
+.card{
+  width:430px;
+  background:#fff;
+  border-radius:22px;
+  padding:32px 28px;
+  text-align:center;
+  box-shadow:0 18px 40px rgba(0,0,0,.12);
+}
+
+.logo{
+  width:250px;
+  margin-bottom:20px;
+}
+
+h1{
+  font-size:23px;
+  font-weight:800;
+  margin-bottom:8px;
+}
+
+.sub{
+  font-size:13px;
+  color:#48627a;
+  font-weight:bold;
+  margin-bottom:20px;
+}
+
+input{
+  width:100%;
+  height:56px;
+  border:1px solid #d8e0e8;
+  border-radius:13px;
+  text-align:center;
+  font-size:18px;
+  font-weight:bold;
+  margin-bottom:14px;
+}
+
+button{
+  width:100%;
+  height:48px;
+  border:none;
+  border-radius:13px;
+  color:#fff;
+  font-size:15px;
+  font-weight:bold;
+  cursor:pointer;
+  background:linear-gradient(90deg,#e5392d,#f57c00);
+}
+
+.error{
+  display:none;
+  color:#c00000;
+  font-size:13px;
+  margin-top:12px;
+  font-weight:bold;
+}
+</style>
+</head>
+
+<body>
+
+<div class="card">
+  <img src="vitalis-logo.png" class="logo">
+
+  <h1>Painel de Board</h1>
+  <div class="sub">Introduza o código de acesso</div>
+
+  <input type="password" id="code" placeholder="Código de acesso" autocomplete="off">
+
+  <button onclick="login()">Entrar</button>
+
+  <div id="error" class="error">Código de acesso inválido</div>
+</div>
+
+<script>
+const ACCESS_CODE = "1234";
+
+function login(){
+  const code = document.getElementById("code").value.trim();
+
+  if(code === ACCESS_CODE){
+    sessionStorage.setItem("painel_board_auth", "ok");
+    sessionStorage.setItem("painel_board_login_time", Date.now());
+    window.location.href = "index.html";
+  }else{
+    document.getElementById("error").style.display = "block";
+    document.getElementById("code").value = "";
+  }
+}
+
+document.getElementById("code").addEventListener("keydown", function(e){
+  if(e.key === "Enter") login();
+});
+</script>
+
+</body>
+</html>
