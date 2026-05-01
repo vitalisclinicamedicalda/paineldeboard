@@ -1,0 +1,351 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Mapa de Saldos</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      font-family: Arial, Helvetica, sans-serif;
+      font-size: 10px;
+      background: #fff;
+      color: #000;
+      padding: 10px;
+    }
+
+    .page-title {
+      text-align: center;
+      font-weight: bold;
+      font-size: 13px;
+      border: 1px solid #000;
+      padding: 5px;
+      margin-bottom: 8px;
+      background: #fff;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-bottom: 18px;
+      table-layout: fixed;
+    }
+
+    th, td {
+      border: 1px solid #aaa;
+      padding: 3px 5px;
+      text-align: center;
+      vertical-align: middle;
+      word-wrap: break-word;
+    }
+
+    thead th {
+      background: #d9d9d9;
+      font-weight: bold;
+      font-size: 9px;
+      text-transform: uppercase;
+    }
+
+    .total-row td {
+      background: #d9d9d9;
+      font-weight: bold;
+    }
+
+    .grand-total-row td {
+      background: #bfbfbf;
+      font-weight: bold;
+    }
+
+    .pos-cell {
+      color: #000;
+    }
+
+    .section-gap {
+      margin-bottom: 20px;
+    }
+
+    .remanescente-val {
+      color: red;
+      font-weight: bold;
+    }
+
+    .loading {
+      text-align: center;
+      padding: 30px;
+      font-size: 14px;
+      color: #555;
+    }
+
+    .error-msg {
+      color: red;
+      text-align: center;
+      padding: 20px;
+    }
+
+    /* Column widths for main Vitalis table */
+    .tbl-vitalis col.c-item   { width: 3%; }
+    .tbl-vitalis col.c-banco  { width: 5%; }
+    .tbl-vitalis col.c-nib    { width: 20%; }
+    .tbl-vitalis col.c-desp   { width: 13%; }
+    .tbl-vitalis col.c-centro { width: 10%; }
+    .tbl-vitalis col.c-resp   { width: 8%; }
+    .tbl-vitalis col.c-saldo-emp  { width: 9%; }
+    .tbl-vitalis col.c-saldo-banco{ width: 9%; }
+    .tbl-vitalis col.c-saldo-disp { width: 9%; }
+    .tbl-vitalis col.c-vpagar { width: 7%; }
+    .tbl-vitalis col.c-defice { width: 4%; }
+    .tbl-vitalis col.c-obs    { width: 3%; }
+
+    /* Column widths for Coopmed table */
+    .tbl-coopmed col.c-item   { width: 4%; }
+    .tbl-coopmed col.c-banco  { width: 5%; }
+    .tbl-coopmed col.c-nib    { width: 22%; }
+    .tbl-coopmed col.c-desp   { width: 13%; }
+    .tbl-coopmed col.c-centro { width: 10%; }
+    .tbl-coopmed col.c-resp   { width: 8%; }
+    .tbl-coopmed col.c-saldo-emp  { width: 9%; }
+    .tbl-coopmed col.c-saldo-banco{ width: 9%; }
+    .tbl-coopmed col.c-saldo-disp { width: 9%; }
+    .tbl-coopmed col.c-vpagar { width: 7%; }
+    .tbl-coopmed col.c-defice { width: 4%; }
+
+    /* Desconto table */
+    .tbl-desconto col.c-item   { width: 10%; }
+    .tbl-desconto col.c-empty  { width: 15%; }
+    .tbl-desconto col.c-descricao { width: 25%; }
+    .tbl-desconto col.c-montante  { width: 15%; }
+    .tbl-desconto col.c-total-desc{ width: 15%; }
+    .tbl-desconto col.c-remanesc  { width: 20%; }
+  </style>
+</head>
+<body>
+
+<div id="app">
+  <div class="loading">A carregar dados do Google Sheets...</div>
+</div>
+
+<script>
+const CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vSLUDSFALaFHQlkwlvXZT8UrwohxbgrHC99Evm1_MopNIRfRvjFgaeFjdQqE85IdYZiUIEY5gBQKl5w/pub?gid=0&single=true&output=csv";
+
+function parseCSV(text) {
+  const lines = text.split('\n');
+  return lines.map(line => {
+    const result = [];
+    let current = '';
+    let inQuotes = false;
+    for (let i = 0; i < line.length; i++) {
+      const ch = line[i];
+      if (ch === '"') {
+        inQuotes = !inQuotes;
+      } else if (ch === ',' && !inQuotes) {
+        result.push(current.trim());
+        current = '';
+      } else {
+        current += ch;
+      }
+    }
+    result.push(current.trim());
+    return result;
+  });
+}
+
+function cell(val, extra) {
+  return `<td ${extra||''}>${val !== undefined && val !== null ? val : ''}</td>`;
+}
+
+function renderVitalis(rows) {
+  // Parse rows for Vitalis section
+  // Expected columns from CSV (0-based):
+  // 0=ITEM, 1=BANCO, 2=NR CONTA - NIB, 3=DESPESAS CORRESPONDENTE, 4=CENTRO DE CUSTO,
+  // 5=RESPONSAVEL DA CONTA, 6=SALDO DA EMPRESA, 7=SALDO DO BANCO, 8=SALDO DISPONIVEL,
+  // 9=VALOR POR PAGAR, 10=DEFICE, 11=OBS
+
+  let html = `
+  <div class="section-gap">
+    <div class="page-title">MAPA DE SALDOS - VITALIS</div>
+    <table class="tbl-vitalis">
+      <colgroup>
+        <col class="c-item"><col class="c-banco"><col class="c-nib">
+        <col class="c-desp"><col class="c-centro"><col class="c-resp">
+        <col class="c-saldo-emp"><col class="c-saldo-banco"><col class="c-saldo-disp">
+        <col class="c-vpagar"><col class="c-defice"><col class="c-obs">
+      </colgroup>
+      <thead>
+        <tr>
+          <th>ITEM</th><th>BANCO</th><th>NR CONTA - NIB</th>
+          <th>DESPESAS CORRESPONDENTE</th><th>CENTRO DE CUSTO</th>
+          <th>RESPONSAVEL DA CONTA</th><th>SALDO DA EMPRESA</th>
+          <th>SALDO DO BANCO</th><th>SALDO DISPONIVEL</th>
+          <th>VALOR POR PAGAR</th><th>DEFICE</th><th>OBS</th>
+        </tr>
+      </thead>
+      <tbody>`;
+
+  for (const r of rows) {
+    if (!r || r.every(c => !c)) continue;
+    const isTotalRow = (r[0] || '').toUpperCase().includes('TOTAL');
+    const isGrandTotal = (r[2] || '').toUpperCase().includes('TOTAL DO SALDO');
+    const cls = isGrandTotal ? 'grand-total-row' : isTotalRow ? 'total-row' : '';
+
+    if (isGrandTotal) {
+      html += `<tr class="${cls}">
+        ${cell('')}${cell('')}
+        ${cell(r[2], 'colspan="4" style="text-align:center;font-weight:bold;"')}
+        ${cell(r[6])}${cell(r[7])}${cell(r[8])}
+        ${cell(r[9]||'')}${cell(r[10]||'')}${cell(r[11]||'')}
+      </tr>`;
+    } else if (isTotalRow) {
+      html += `<tr class="${cls}">
+        ${cell('')}${cell('')}
+        ${cell(r[2]||r[0], 'colspan="4" style="text-align:center;font-weight:bold;"')}
+        ${cell(r[6])}${cell(r[7])}${cell(r[8])}
+        ${cell(r[9]||'')}${cell(r[10]||'')}${cell(r[11]||'')}
+      </tr>`;
+    } else {
+      html += `<tr class="${cls}">
+        ${cell(r[0])}${cell(r[1])}${cell(r[2])}
+        ${cell(r[3])}${cell(r[4])}${cell(r[5])}
+        ${cell(r[6])}${cell(r[7])}${cell(r[8])}
+        ${cell(r[9]||'')}${cell(r[10]||'')}${cell(r[11]||'')}
+      </tr>`;
+    }
+  }
+
+  html += `</tbody></table></div>`;
+  return html;
+}
+
+function renderCoopmed(rows) {
+  let html = `
+  <div class="section-gap">
+    <div class="page-title">MAPA DE SALDOS - COOPMED</div>
+    <table class="tbl-coopmed">
+      <colgroup>
+        <col class="c-item"><col class="c-banco"><col class="c-nib">
+        <col class="c-desp"><col class="c-centro"><col class="c-resp">
+        <col class="c-saldo-emp"><col class="c-saldo-banco"><col class="c-saldo-disp">
+        <col class="c-vpagar"><col class="c-defice">
+      </colgroup>
+      <thead>
+        <tr>
+          <th>ITEM</th><th>BANCO</th><th>NR CONTA - NIB</th>
+          <th>DESPESAS CORRESPONDENTE</th><th>CENTRO DE CUSTO</th>
+          <th>RESPONSAVEL DA CONTA</th><th>SALDO DA EMPRESA</th>
+          <th>SALDO DO BANCO</th><th>SALDO DISPONIVEL</th>
+          <th>VALOR POR PAGAR</th><th>DEFICE</th>
+        </tr>
+      </thead>
+      <tbody>`;
+
+  for (const r of rows) {
+    if (!r || r.every(c => !c)) continue;
+    const isTotalRow = (r[0] || '').toUpperCase().includes('TOTAL') ||
+                       (r[2] || '').toUpperCase().includes('TOTAL');
+    const cls = isTotalRow ? 'total-row' : '';
+
+    if (isTotalRow) {
+      html += `<tr class="${cls}">
+        ${cell('')}${cell('')}
+        ${cell(r[2]||r[0], 'colspan="4" style="text-align:center;font-weight:bold;"')}
+        ${cell(r[6])}${cell(r[7])}${cell(r[8])}
+        ${cell(r[9]||'')}${cell(r[10]||'')}
+      </tr>`;
+    } else {
+      html += `<tr>
+        ${cell(r[0])}${cell(r[1])}${cell(r[2])}
+        ${cell(r[3])}${cell(r[4])}${cell(r[5])}
+        ${cell(r[6])}${cell(r[7])}${cell(r[8])}
+        ${cell(r[9]||'')}${cell(r[10]||'')}
+      </tr>`;
+    }
+  }
+
+  html += `</tbody></table></div>`;
+  return html;
+}
+
+function renderDesconto(rows) {
+  let html = `
+  <div class="section-gap">
+    <div class="page-title" style="font-style:italic;">CONTROLE DO DESCONTO DO POS</div>
+    <table class="tbl-desconto">
+      <colgroup>
+        <col class="c-item"><col class="c-empty">
+        <col class="c-descricao"><col class="c-montante">
+        <col class="c-total-desc"><col class="c-remanesc">
+      </colgroup>
+      <thead>
+        <tr>
+          <th>ITEM</th><th></th>
+          <th>DESCRICAO</th><th>MONTANTE</th>
+          <th>TOTAL DESCONTADO</th><th>REMANESCENTE</th>
+        </tr>
+      </thead>
+      <tbody>`;
+
+  for (const r of rows) {
+    if (!r || r.every(c => !c)) continue;
+    const isRem = r[5] && r[5].toString().trim() !== '';
+    html += `<tr>
+      ${cell(r[0])}${cell(r[1]||'')}
+      ${cell(r[2]||'')}${cell(r[3]||'')}
+      ${cell(r[4]||'')}
+      <td class="${isRem?'remanescente-val':''}">${r[5]||''}</td>
+    </tr>`;
+  }
+
+  html += `</tbody></table></div>`;
+  return html;
+}
+
+async function loadAndRender() {
+  const app = document.getElementById('app');
+  try {
+    const resp = await fetch(CSV_URL);
+    if (!resp.ok) throw new Error('Erro ao carregar CSV: ' + resp.status);
+    const text = await resp.text();
+    const rows = parseCSV(text);
+
+    // Detect sections by looking for marker rows
+    // Section 1: VITALIS starts at row with "MAPA DE SALDOS - VITALIS" or from beginning
+    // Section 2: COOPMED starts at row with "MAPA DE SALDOS - COOPMED"
+    // Section 3: DESCONTO starts at row with "CONTROLE DO DESCONTO"
+
+    let vitalisRows = [], coopmedRows = [], descontoRows = [];
+    let section = 'vitalis';
+
+    for (const r of rows) {
+      const joined = r.join(' ').toUpperCase();
+      if (joined.includes('MAPA DE SALDOS') && joined.includes('COOPMED')) {
+        section = 'coopmed'; continue;
+      }
+      if (joined.includes('CONTROLE DO DESCONTO') || joined.includes('DESCONTO DO POS')) {
+        section = 'desconto'; continue;
+      }
+      if (joined.includes('MAPA DE SALDOS') && joined.includes('VITALIS')) {
+        section = 'vitalis'; continue;
+      }
+      // Skip header rows
+      if (joined.includes('NR CONTA') || joined.includes('SALDO DA EMPRESA') || joined.includes('DESCRICAO')) continue;
+
+      if (section === 'vitalis') vitalisRows.push(r);
+      else if (section === 'coopmed') coopmedRows.push(r);
+      else if (section === 'desconto') descontoRows.push(r);
+    }
+
+    app.innerHTML =
+      renderVitalis(vitalisRows) +
+      renderCoopmed(coopmedRows) +
+      renderDesconto(descontoRows);
+
+  } catch (err) {
+    app.innerHTML = `<div class="error-msg">Erro ao carregar dados: ${err.message}<br><small>Verifique se o Google Sheet está publicado e o URL é válido.</small></div>`;
+    console.error(err);
+  }
+}
+
+loadAndRender();
+</script>
+</body>
+</html>
