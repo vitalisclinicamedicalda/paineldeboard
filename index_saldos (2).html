@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Mapa de Saldos - Vitalis</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
+  <style>
+    *{box-sizing:border-box}
+    body{
+      margin:0;
+      background:#fff;
+      font-family:Arial, Helvetica, sans-serif;
+      color:#000;
+      font-size:12px;
+      overflow:auto;
+    }
+    .sheet-wrap{
+      width:100%;
+      min-width:1880px;
+      padding:3px 2px 18px;
+      background:#fff;
+    }
+    table{
+      width:100%;
+      border-collapse:collapse;
+      table-layout:fixed;
+      border-spacing:0;
+    }
+    td,th{
+      border:1px solid #000;
+      padding:3px 4px;
+      height:22px;
+      line-height:1.05;
+      vertical-align:middle;
+      text-align:center;
+      white-space:nowrap;
+      overflow:hidden;
+      text-overflow:clip;
+      font-weight:700;
+    }
+    th{font-size:13px;background:#fff;font-weight:800}
+    .title{
+      font-size:20px;
+      font-weight:900;
+      text-align:center;
+      height:27px;
+      background:#fff;
+    }
+    .header th{font-size:13px;font-weight:900;text-transform:uppercase}
+    .left{text-align:left}
+    .right{text-align:right}
+    .center{text-align:center}
+    .italic{font-style:italic}
+    .bold{font-weight:900}
+    .normal{font-weight:700}
+    .small{font-size:10px}
+    .tiny{font-size:9px}
+    .gray td,.gray{background:#bfbfbf!important}
+    .total-label{text-align:center;font-weight:900}
+    .amount{font-style:italic;font-size:14px;font-weight:900;text-align:right}
+    .amount-small{font-style:italic;font-size:12px;font-weight:900;text-align:center}
+    .blank td{border-left:0;border-right:0;height:18px}
+    .no-border{border:0!important}
+    .red{color:red;font-size:16px;font-style:italic;font-weight:900}
+
+    col.c1{width:5.1%}   /* ITEM */
+    col.c2{width:5.0%}   /* BANCO */
+    col.c3{width:19.2%}  /* NR CONTA */
+    col.c4{width:11.5%}  /* DESPESAS */
+    col.c5{width:9.8%}   /* CENTRO */
+    col.c6{width:9.4%}   /* RESPONSAVEL */
+    col.c7{width:11.5%}  /* SALDO EMPRESA */
+    col.c8{width:9.8%}   /* SALDO BANCO */
+    col.c9{width:12.0%}  /* DISPONIVEL */
+    col.c10{width:7.8%}  /* VALOR PAGAR */
+    col.c11{width:5.0%}  /* DEFICE */
+    col.c12{width:5.1%}  /* OBS */
+
+    @media(max-width:900px){
+      .sheet-wrap{transform:scale(.78);transform-origin:top left;width:128%;}
+    }
+  </style>
+</head>
+<body>
+<div class="sheet-wrap">
+  <table id="sheet">
+    <colgroup>
+      <col class="c1"><col class="c2"><col class="c3"><col class="c4"><col class="c5"><col class="c6"><col class="c7"><col class="c8"><col class="c9"><col class="c10"><col class="c11"><col class="c12">
+    </colgroup>
+    <tbody id="tbody">
+      <tr><td colspan="12" class="title">MAPA DE SALDOS - VITALIS</td></tr>
+      <tr class="header">
+        <th>ITEM</th><th>BANCO</th><th>NR CONTA - NIB</th><th>DESPESAS CORRESPONDENTE</th><th>CENTRO DE CUSTO</th><th>RESPONSAVEL DA CONTA</th><th>SALDO DA EMPRESA</th><th>SALDO DO BANCO</th><th>SALDO DISPONIVEL</th><th>VALOR POR PAGAR</th><th>DEFICE</th><th>OBS</th>
+      </tr>
+      <tr><td colspan="12">A carregar dados...</td></tr>
+    </tbody>
+  </table>
+</div>
+
+<script>
+const CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vSLUDSFALaFHQlkwlvXZT8UrwohxbgrHC99Evm1_MopNIRfRvjFgaeFjdQqE85IdYZiUIEY5gBQKl5w/pub?gid=0&single=true&output=csv";
+
+function esc(v){return String(v ?? "").replace(/[&<>'"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c]));}
+function norm(v){return String(v ?? "").trim().toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-z0-9]/g,'');}
+function pick(row, names){
+  const keys = Object.keys(row || {});
+  const wanted = names.map(norm);
+  for(const k of keys){ if(wanted.includes(norm(k))) return row[k]; }
+  for(const k of keys){ const nk=norm(k); if(wanted.some(w=>nk.includes(w)||w.includes(nk))) return row[k]; }
+  return "";
+}
+function num(v){
+  let s=String(v??"").trim(); if(!s) return 0;
+  s=s.replace(/MZM|MT|MZN/gi,'').replace(/\s/g,'');
+  if(s.includes(',') && s.includes('.')) s=s.replace(/,/g,'');
+  else if(s.includes(',')) s=s.replace(',','.');
+  s=s.replace(/[^0-9.-]/g,'');
+  return Number(s)||0;
+}
+function money(v){return Number(v||0).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2}) + ' MZM';}
+function hasText(v){return String(v??'').trim()!=='';}
+function rowClass(row){
+  const first = String(Object.values(row)[0] ?? '').trim().toUpperCase();
+  const all = Object.values(row).join(' ').toUpperCase();
+  if(all.includes('TOTAL MZN') || all.includes('TOTAL DO SALDO') || all.includes('TOTAL MZN-FNB') || all.includes('TOTAL MZN -')) return 'gray';
+  return '';
+}
+function isSectionTitle(row){
+  const all = Object.values(row).join(' ').toUpperCase();
+  return all.includes('MAPA DE SALDOS - COOPMED') || all.includes('CONTROLE DO DESCONTO DO POS');
+}
+function isHeaderLike(row){
+  const all = Object.values(row).join(' ').toUpperCase();
+  return all.includes('NR CONTA') && all.includes('SALDO DA EMPRESA');
+}
+function getCell(row, idx, fallbackNames){
+  const vals = Object.values(row);
+  return hasText(vals[idx]) ? vals[idx] : pick(row, fallbackNames || []);
+}
+function renderDefaultRows(rows){
+  let html = '';
+
+  rows.forEach((r, i)=>{
+    const vals = Object.values(r);
+    const all = vals.join(' ').trim();
+    if(!all) { html += `<tr><td colspan="12" class="no-border">&nbsp;</td></tr>`; return; }
+
+    if(isSectionTitle(r)){
+      html += `<tr><td colspan="12" class="title">${esc(all)}</td></tr>`;
+      return;
+    }
+
+    if(isHeaderLike(r)){
+      html += `<tr class="header">${vals.slice(0,12).map(v=>`<th>${esc(v)}</th>`).join('')}</tr>`;
+      return;
+    }
+
+    const c = rowClass(r);
+    const first = vals[0] ?? '';
+    const text = all.toUpperCase();
+    const isTotal = text.includes('TOTAL');
+    const isCoopmed = text.includes('COOPMED') && text.includes('MAPA');
+
+    let cells = [];
+    for(let x=0;x<12;x++) cells.push(vals[x] ?? '');
+
+    if(isTotal){
+      html += `<tr class="gray">
+        <td></td><td colspan="5" class="total-label italic">${esc(cells.slice(0,6).find(v=>String(v).toUpperCase().includes('TOTAL')) || cells[2] || all)}</td>
+        <td class="amount">${esc(cells[6]||'')}</td><td class="amount">${esc(cells[7]||'')}</td><td class="amount">${esc(cells[8]||'')}</td><td></td><td></td><td></td>
+      </tr>`;
+      return;
+    }
+
+    html += `<tr class="${c}">
+      <td>${esc(cells[0])}</td>
+      <td>${esc(cells[1])}</td>
+      <td class="left">${esc(cells[2])}</td>
+      <td class="left">${esc(cells[3])}</td>
+      <td class="center small">${esc(cells[4])}</td>
+      <td class="center small">${esc(cells[5])}</td>
+      <td class="amount-small">${esc(cells[6])}</td>
+      <td class="amount-small">${esc(cells[7])}</td>
+      <td class="amount-small">${esc(cells[8])}</td>
+      <td>${esc(cells[9])}</td>
+      <td>${esc(cells[10])}</td>
+      <td class="small">${esc(cells[11])}</td>
+    </tr>`;
+  });
+  return html;
+}
+
+function renderFromCSV(rows){
+  const tbody=document.getElementById('tbody');
+  if(!rows.length){tbody.innerHTML='<tr><td colspan="12">Sem dados encontrados.</td></tr>';return;}
+
+  const headers = Object.keys(rows[0] || {});
+  const looksLikeExact = headers.some(h=>norm(h).includes('nrconta')) || headers.some(h=>norm(h).includes('saldodaempresa'));
+  let html = `<tr><td colspan="12" class="title">MAPA DE SALDOS - VITALIS</td></tr>`;
+
+  if(looksLikeExact){
+    html += `<tr class="header"><th>ITEM</th><th>BANCO</th><th>NR CONTA - NIB</th><th>DESPESAS CORRESPONDENTE</th><th>CENTRO DE CUSTO</th><th>RESPONSAVEL DA CONTA</th><th>SALDO DA EMPRESA</th><th>SALDO DO BANCO</th><th>SALDO DISPONIVEL</th><th>VALOR POR PAGAR</th><th>DEFICE</th><th>OBS</th></tr>`;
+    let totals = {empresa:0,banco:0,disp:0};
+    rows.forEach(r=>{
+      const item=pick(r,['ITEM','Item']);
+      const banco=pick(r,['BANCO','Banco']);
+      const conta=pick(r,['NR CONTA - NIB','NR CONTA','CONTA','NIB']);
+      const desp=pick(r,['DESPESAS CORRESPONDENTE','DESPESAS','Despesa']);
+      const centro=pick(r,['CENTRO DE CUSTO','Centro de Custo']);
+      const resp=pick(r,['RESPONSAVEL DA CONTA','Responsavel da Conta','Responsável da Conta']);
+      const se=pick(r,['SALDO DA EMPRESA','Saldo da Empresa']);
+      const sb=pick(r,['SALDO DO BANCO','Saldo do Banco']);
+      const sd=pick(r,['SALDO DISPONIVEL','Saldo Disponivel','Saldo Disponível']);
+      const vp=pick(r,['VALOR POR PAGAR','Valor por Pagar']);
+      const def=pick(r,['DEFICE','Défice']);
+      const obs=pick(r,['OBS','Observação']);
+      const all=[item,banco,conta,desp,centro,resp,se,sb,sd,vp,def,obs].join(' ').toUpperCase();
+      if(all.includes('TOTAL')){
+        html += `<tr class="gray"><td></td><td colspan="5" class="total-label italic">${esc(conta||desp||all)}</td><td class="amount">${esc(se)}</td><td class="amount">${esc(sb)}</td><td class="amount">${esc(sd)}</td><td>${esc(vp)}</td><td>${esc(def)}</td><td>${esc(obs)}</td></tr>`;
+      } else {
+        totals.empresa += num(se); totals.banco += num(sb); totals.disp += num(sd);
+        html += `<tr><td>${esc(item)}</td><td>${esc(banco)}</td><td class="left">${esc(conta)}</td><td class="left">${esc(desp)}</td><td class="small">${esc(centro)}</td><td class="small">${esc(resp)}</td><td class="amount-small">${esc(se)}</td><td class="amount-small">${esc(sb)}</td><td class="amount-small">${esc(sd)}</td><td>${esc(vp)}</td><td>${esc(def)}</td><td class="small">${esc(obs)}</td></tr>`;
+      }
+    });
+    tbody.innerHTML=html;
+  } else {
+    tbody.innerHTML = renderDefaultRows(rows);
+  }
+}
+
+Papa.parse(CSV_URL,{
+  download:true,
+  header:true,
+  skipEmptyLines:false,
+  transformHeader:h=>String(h||'').trim(),
+  complete:res=>renderFromCSV((res.data||[]).filter(r=>Object.values(r).some(v=>String(v??'').trim()!==''))),
+  error:()=>{document.getElementById('tbody').innerHTML='<tr><td colspan="12">Erro ao carregar dados do Google Sheets.</td></tr>';}
+});
+</script>
+</body>
+</html>
