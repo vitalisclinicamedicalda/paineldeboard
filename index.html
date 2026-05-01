@@ -57,7 +57,8 @@ Papa.parse(URL, {
         const data = results.data;
         const table = document.getElementById("tabela");
 
-        data.forEach((row, index) => {
+        // 🔥 COMEÇA NA LINHA 8
+        data.slice(7).forEach((row, index) => {
 
             const tr = document.createElement("tr");
 
