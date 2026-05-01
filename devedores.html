@@ -247,10 +247,15 @@ function isUsefulRow(r){
   if(t.includes("ITEM") && t.includes("PERIODO")) return false;
   if(t.includes("CLIENTE") && t.includes("JANEIRO")) return false;
 
+  /* remove totais que devem aparecer apenas na pequena tabela final */
   if(t.includes("TOTAL EM DÍVIDA")) return false;
+  if(t.includes("TOTAL EM DIVIDA")) return false;
+  if(t.includes("TOTAL PISO")) return false;
   if(t.includes("TOTAL PIO")) return false;
   if(t.includes("TOTAL VALOR EM COBRANÇA")) return false;
+  if(t.includes("TOTAL VALOR EM COBRANCA")) return false;
   if(t.includes("TOTAL PISO EM COBRANÇA")) return false;
+  if(t.includes("TOTAL PISO EM COBRANCA")) return false;
 
   return true;
 }
