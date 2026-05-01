@@ -359,9 +359,10 @@ function render(rows){
 
   return html;
 }
-
 function summary(rows){
   let html = `<table class="summary">`;
+
+  let count = 0;
 
   for(let i = 27; i < rows.length; i++){
     const texto = c(rows[i][0]);
@@ -375,10 +376,17 @@ function summary(rows){
         <td>${valor}</td>
       </tr>
     `;
+
+    count++;
+
+    // 🔒 LIMITA A 4 LINHAS (igual ao PDF)
+    if(count === 4) break;
   }
 
   html += `</table>`;
   return html;
+}
+
 }
 
 async function carregar(){
